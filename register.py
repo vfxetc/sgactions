@@ -14,6 +14,11 @@ def main():
             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'applescript_handler.app'),
         ])
     
+    elif platform.system() == 'Linux':
+        call([
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'register-linux.sh'),
+        ])
+    
     else:
         print 'We are not setup for procotol handlers on %s' % platform.system()
 
