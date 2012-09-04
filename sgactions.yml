@@ -1,0 +1,9 @@
+-
+    entrypoint: sgactions.examples:dump_environ
+    title: "[DEV] Dump Environment"
+    entity_types: [Tool]
+
+-
+    entrypoint: sgactions.examples:dump_kwargs
+    title: "[DEV] Dump Kwargs"
+    entity_types: [Tool]
