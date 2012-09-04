@@ -2,10 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleAllowMixedLocalizations</key>
-	<true/>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
+	
 	<key>CFBundleExecutable</key>
 	<string>applet</string>
 	<key>CFBundleIconFile</key>
@@ -13,11 +10,13 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>as_handler</string>
+	<string>applescript_handler</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
 	<string>aplt</string>
+	
+	<!-- URL protocol handler -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -29,6 +28,11 @@
 			</array>
 		</dict>
 	</array>
+	
+	<!-- Hide from Dock -->
+	<key>LSBackgroundOnly</key>
+	<string>1</string>
+	
 	<key>LSMinimumSystemVersionByArchitecture</key>
 	<dict>
 		<key>x86_64</key>
@@ -36,20 +40,6 @@
 	</dict>
 	<key>LSRequiresCarbon</key>
 	<true/>
-	<key>WindowState</key>
-	<dict>
-		<key>dividerCollapsed</key>
-		<false/>
-		<key>eventLogLevel</key>
-		<integer>-1</integer>
-		<key>name</key>
-		<string>ScriptWindowState</string>
-		<key>positionOfDivider</key>
-		<real>304</real>
-		<key>savedFrame</key>
-		<string>689 145 1041 551 0 0 1920 1058 </string>
-		<key>selectedTabView</key>
-		<string>event log</string>
-	</dict>
+	
 </dict>
 </plist>
