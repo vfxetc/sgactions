@@ -15,7 +15,6 @@ def main():
     optparser = optparse.OptionParser()
     optparser.add_option('-n', '--dry-run', action="store_true", dest="dry_run")
     optparser.add_option('-l', '--list', action="store_true", dest="list")
-    optparser.add_option('-r', '--reset', action="store_true", dest="reset")
     optparser.add_option('-d', '--delete', action="store_true", dest="delete")    
     opts, args = optparser.parse_args()
     
@@ -50,16 +49,18 @@ def main():
             
             # Delete by ID.
             if arg.isdigit():
-                print 'Deleting', arg
+                print 'Delete', arg
                 if not opts.dry_run:
                     sg.delete('ActionMenuItem', int(arg))
             
             # Delete by URL.
             if arg in existing:
                 for menu_item in existing[arg]:
-                    print 'Deleting', menu_item['id']
+                    print 'Delete', menu_item['id']
                     if not opts.dry_run:
                         sg.delete('ActionMenuItem', menu_item['id'])
+        
+        exit(0)
 
     
     # Load the specs.
@@ -101,7 +102,7 @@ def main():
                         
             # Create.
             if not old_data:
-                print 'Creating %s / %s' % (entrypoint, entity_type)
+                print 'Create %s / %s' % (entrypoint, entity_type)
                 if not opts.dry_run:
                     sg.create('ActionMenuItem', new_data)
             
@@ -110,11 +111,11 @@ def main():
                 id_ = old_data.pop('id')
                 del old_data['type']
                 if new_data != old_data:
-                    print 'Updating %s / %s' % (entrypoint, entity_type)
+                    print 'Update %s / %s' % (entrypoint, entity_type)
                     if not opts.dry_run:
                         sg.update('ActionMenuItem', id_, new_data)
                 else:
-                    print 'Leaving %s / %s' % (entrypoint, entity_type)
+                    print 'Ignore %s / %s' % (entrypoint, entity_type)
 
 
 if __name__ == '__main__':
