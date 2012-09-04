@@ -35,16 +35,6 @@ def main(url):
     function(**query)
 
 
-def test_kwargs(**kwargs):
-    for k, v in sorted(kwargs.iteritems()):
-        print '%s = %r' % (k, v)
-
-
-def test_environ(**kwargs):
-    for k, v in sorted(os.environ.iteritems()):
-        print '%s = %r' % (k, v)
-
-
 if __name__ == '__main__':
     main(sys.argv[1])
     
