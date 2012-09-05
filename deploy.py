@@ -4,7 +4,7 @@ import sys
 
 import yaml
     
-from shotgun.ks_shotgun import connect
+from shotgun_api3_registry import connect
 
 
 FIELD_NAMES = ('id', 'title', 'list_order', 'entity_type', 'selection_required', 'url')
