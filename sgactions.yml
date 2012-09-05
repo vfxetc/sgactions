@@ -1,9 +1,9 @@
 -
     entrypoint: sgactions.examples:dump_environ
-    title: "[dev] Dump Environment"
+    title: "[dev] Print Environment"
     # entity_types: [None]
 
 -
     entrypoint: sgactions.examples:dump_kwargs
-    title: "[dev] Dump Kwargs"
+    title: "[dev] Print Arguments"
     # entity_types: [None]
