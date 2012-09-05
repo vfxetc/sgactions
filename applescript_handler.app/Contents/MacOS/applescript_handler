@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+
+# Perform sys.argv emulation.
+sys.path.append(os.path.dirname(__file__))
+import argv_emulation
+
+
+# Handoff to environment bootstrapper.
+bootstrap = os.path.join(os.path.dirname(__file__), 'bootstrap_environ')
+os.execv(bootstrap, [bootstrap, sys.argv[-1]])
