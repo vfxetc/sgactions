@@ -1,6 +1,7 @@
 import optparse
 from pprint import pprint
 import sys
+import urllib
 
 import yaml
     
@@ -24,17 +25,18 @@ def main():
     existing = {}
     individuals = sg.find('ActionMenuItem', [('url', 'starts_with', 'sgaction:')], FIELD_NAMES)
     for menu_item in individuals:
-        existing.setdefault(menu_item['url'], []).append(menu_item)
+        existing.setdefault(menu_item['url'].split('/')[0], []).append(menu_item)
     
     # List the existing menu items.
     if opts.list:
         for menu_items in sorted(existing.itervalues(), key=lambda x: (x[0]['list_order'], x[0]['title'])):
-            print menu_items[0]['url']
+            print menu_items[0]['url'].split('/')[0]
             print '\ttitle: %s' % menu_items[0]['title']
             print '\tlist_order: %s' % menu_items[0]['list_order']
             print '\tentity_types:', ', '.join(str(x['entity_type']) for x in menu_items)
             print '\tids:', ', '.join(str(x['id']) for x in menu_items)
             print '\tselection_required: %s' % menu_items[0]['selection_required']
+            print '\trich: %s' % (menu_items[0]['url'].split('/') + [''])[1]
         exit()
     
     # Delete some menu items.
@@ -81,11 +83,17 @@ def main():
             menu_item.setdefault('list_order', None)
             menu_item.setdefault('selection_required', False)
             menu_item.setdefault('entity_types', [None])
+            menu_item.setdefault('rich', {})
     
     # Create/Update.
     for entrypoint, spec in sorted(specs.iteritems()):
-        url = 'sgaction:' + entrypoint
-        
+        url = url_base = 'sgaction:' + entrypoint
+        rich = {}
+        for k, v in spec['rich'].iteritems():
+            rich[k[0]] = str(v)
+        if rich:
+            url += '/' + urllib.urlencode(rich)
+            
         for entity_type in spec['entity_types']:
             
             # Get the new data.
@@ -94,8 +102,8 @@ def main():
             new_data['url'] = url
             
             # Get the old data.
-            if url in existing:
-                matches = [x for x in existing[url] if x['entity_type'] == entity_type]
+            if url_base in existing:
+                matches = [x for x in existing[url_base] if x['entity_type'] == entity_type]
                 old_data = matches[0] if matches else {}
             else:
                 old_data = {}

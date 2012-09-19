@@ -7,14 +7,14 @@ import os
 def main(url):
     
     # Parse the URL into scheme, path, and query.
-    m = re.match(r'^(?:(\w+):)?(.*?)(?:\?(.*))?$', url)
-    scheme, path, query = m.groups()
+    m = re.match(r'^(?:(\w+):)?(.*?)(?:/(.*?))?(?:\?(.*))?$', url)
+    scheme, netloc, path, query = m.groups()
     query = urlparse.parse_qs(query, keep_blank_values=True) if query else {}
     
     # Parse the values.
     for k, v in query.items():
         if k == 'ids' or k.endswith('_ids'):
-            v[:] = [int(x) for x in v[0].split(',')]
+            v[:] = [int(x) for x in v[0].split(',')] if v[0] else []
             continue
         if k.endswith('_id'):
             v[:] = [int(x) for x in v]
@@ -22,7 +22,7 @@ def main(url):
             query[k] = v[0]
     
     # Parse the path into an entrypoint.
-    m = re.match(r'^([\w.]+):(\w+)$', path)
+    m = re.match(r'^([\w.]+):(\w+)$', netloc)
     if not m:
         print >>sys.stderr, 'entrypoint must be like "package.module:function"'
         exit(1)

@@ -1,9 +1,17 @@
 -
     entrypoint: sgactions.examples:dump_environ
-    title: "[dev] Print Environment"
+    title: "Development: Show Environment"
+    rich:
+        heading: Development
+        title: Show Environment
+        icon: bricks
     # entity_types: [None]
 
 -
     entrypoint: sgactions.examples:dump_kwargs
-    title: "[dev] Print Arguments"
+    title: "Development: Show Kwargs"
+    rich:
+        heading: Development
+        title: Show Kwargs
+        icon: bricks
     # entity_types: [None]
