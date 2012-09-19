@@ -23,31 +23,27 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
             for (var i = 0; i < this.items.length; i++) {
                 if (this.items[i].url && /^sgaction/.test(this.items[i].url)) {
                     
-                    var m;
-                    
-                    // Look for an icon name.
-                    m = /^\s*\[([\w-]+)\]\s*(.+)$/.exec(this.items[i].html || '');
+                    // Parse the rich data.
+                    var rich = {};
+                    var m = /^(.+?)\/(.+?)$/.exec(this.items[i].url);
                     if (m) {
-                        this.items[i].icon_name = 'silk-icon silk-icon-' + m[1];
-                        this.items[i].html = m[2];
-                    } else {
-                        this.items[i].icon_name = 'silk-icon silk-icon-brick';
+                        this.items[i].url = m[1]
+                        var pairs = m[2].split('&');
+                        for (var j = 0; j < pairs.length; j++) {
+                            var pair = pairs[j].split('=');
+                            rich[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+                        }
                     }
                     
-                    // Look for a heading.
-                    m = /^([^:]+):\s*(.+)$/.exec(this.items[i].html || '');
-                    if (m) {
-                        if (last_heading != m[1]) {
-                            this.items[i].heading = m[1];
-                        }
-                        this.items[i].html = m[2];
-                        last_heading = m[1];
-                    } else {
-                        if (last_heading) {
-                            this.items[i].line = true;
-                        }
-                        last_heading = null;
+                    // Title and icon.
+                    this.items[i].html = (rich.t || this.items[i].html);
+                    this.items[i].icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
+                    // Headings.
+                    if (rich.h != last_heading) {
+                        this.items[i].heading = rich.h;
+                        this.items[i].line = !rich.h;
                     }
+                    last_heading = rich.h;
                     
                 }
             }
