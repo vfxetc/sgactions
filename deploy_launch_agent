@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+if [[ "$(id -u)" != 0 ]]; then
+    echo Must be run as root.
+    exit
+fi
+
+for home in /home/*; do
+    user=$(basename "$home")
+
+    echo $user
+    id "$user" > /dev/null
+    if [[ $? != 0 ]]; then
+        continue
+    fi
+    
+    if [[ -f "$home/Library/LaunchAgents/com.keystone.sgactions.register.plist" ]]; then
+        rm "$home/Library/LaunchAgents/com.keystone.sgactions.register.plist"
+    fi
+    
+    # Cat to not preseve any attributes.
+    mkdir -p "$home/Library/LaunchAgents" && \
+    cat "$(dirname "$0")/com.westernx.sgactions.plist" > "$home/Library/LaunchAgents/com.westernx.sgactions.plist" && \
+    chown -R "$user" "$home/Library/LaunchAgents" && \
+    chmod -R u=rwX,o= "$home/Library/LaunchAgents"
+    
+    
+done
