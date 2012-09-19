@@ -92,7 +92,7 @@ def main():
         for k, v in spec['rich'].iteritems():
             rich[k[0]] = str(v)
         if rich:
-            url += '/' + urllib.urlencode(rich)
+            url += '/' + '&'.join('%s=%s' % (k, urllib.quote(v)) for k, v in rich.iteritems())
             
         for entity_type in spec['entity_types']:
             
