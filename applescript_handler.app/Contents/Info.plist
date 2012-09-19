@@ -3,18 +3,15 @@
 <plist version="1.0">
 <dict>
 	
+	<key>CFBundleIdentifier</key>
+	<string>com.westernx.sgactions</string>
+	<key>CFBundleDisplayName</key>
+	<string>sgactions</string>
+	<key>CFBundleVersion</key>
+	<string>1.0.0</string>
+	
 	<key>CFBundleExecutable</key>
 	<string>applescript_handler</string>
-	<key>CFBundleIconFile</key>
-	<string>applet</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>applescript_handler</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>aplt</string>
 	
 	<!-- URL protocol handler -->
 	<key>CFBundleURLTypes</key>
@@ -32,14 +29,6 @@
 	<!-- Hide from Dock -->
 	<key>LSBackgroundOnly</key>
 	<string>1</string>
-	
-	<key>LSMinimumSystemVersionByArchitecture</key>
-	<dict>
-		<key>x86_64</key>
-		<string>10.6</string>
-	</dict>
-	<key>LSRequiresCarbon</key>
-	<true/>
 	
 </dict>
 </plist>
