@@ -27,7 +27,7 @@ def main():
     
     elif platform.system() == 'Linux':
         call([
-            os.path.abspath(os.path.join(__file__, '..', '..', 'register-linux.sh')),
+            os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
         ])
     
     else:

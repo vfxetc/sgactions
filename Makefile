@@ -6,8 +6,8 @@ default : sgactions
 
 SGACTIONS_SENTINEL := .sgactions.make-sentinel
 sgactions : $(SGACTIONS_SENTINEL)
-$(SGACTIONS_SENTINEL) : example_sgactions.yml $(SGACTIONS_DEPLOY)
-	python -m sgactions.deploy example_sgactions.yml
+$(SGACTIONS_SENTINEL) : examples.yml $(SGACTIONS_DEPLOY)
+	python -m sgactions.deploy examples.yml
 	@ touch $(SGACTIONS_SENTINEL)
 
 clean:
