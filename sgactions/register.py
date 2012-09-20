@@ -4,7 +4,62 @@ from subprocess import call, Popen, PIPE
 import os
 import platform
 import re
+import json
+import hashlib
 
+
+_google_hash_map = {}
+for i, c in enumerate('0123456789abcdef'):
+    _google_hash_map[c] = chr(ord('a') + i)
+
+
+def google_hash(text):
+    digest = hashlib.sha256(text).hexdigest()[:32]
+    return ''.join(_google_hash_map[x] for x in digest)
+
+
+def install_chrome_extension(path):
+    if not os.path.exists(path):
+        return
+    print path
+    prefs = json.load(open(path))
+    
+    ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browser_addons', 'Chrome'))
+    ext_id = google_hash(ext_path)
+    
+    # Remove all old extensions.
+    for k, v in prefs['extensions']['settings'].items():
+        if '/sgactions/browser_addons/Chrome' in v.get('path', ''):
+            if k == ext_id:
+                print 'Already installed'
+            else:
+                print 'Removing', v['path']
+                del prefs['extensions']['settings'][k]
+    
+    # Get the existing state.
+    state = int(bool(prefs['extensions']['settings'].get(ext_id, {}).get('state', True)))
+    
+    # Update the settings.
+    prefs['extensions']['settings'][ext_id] = {
+       "active_permissions": {
+          "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+       },
+       "events": [ "runtime.onInstalled" ],
+       "from_bookmark": False,
+       "from_webstore": False,
+       "granted_permissions": {
+          "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+       },
+       "install_time": "12992636740554400",
+       "location": 4,
+       "newAllowFileAccess": True,
+       "path": ext_path,
+       "state": state
+    }
+    
+    json.dump(prefs, open(path, 'w'), indent=4, sort_keys=True)
+
+    
 def main():
     
     if platform.system() == 'Darwin':
@@ -23,12 +78,18 @@ def main():
             '-v',
             handler,
         ])
+        print 'Installing Chrome extension...'
+        install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Preferences'))
+        install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary/Default/Preferences'))
         print 'Done.'
     
     elif platform.system() == 'Linux':
         call([
             os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
         ])
+        print 'Installing Chrome extension...'
+        install_chrome_extension(os.path.expanduser('~/.config/google-chrome/Default/Preferences'))
+        print 'Done.'
     
     else:
         print 'We are not setup for protocol handlers on %s' % platform.system()
