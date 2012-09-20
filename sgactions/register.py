@@ -19,10 +19,13 @@ def google_hash(text):
 
 
 def install_chrome_extension(path):
+    
     if not os.path.exists(path):
         return
-    print path
+    print '\tChecking', path
     prefs = json.load(open(path))
+    
+    changed = False
     
     ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browser_addons', 'Chrome'))
     ext_id = google_hash(ext_path)
@@ -31,33 +34,36 @@ def install_chrome_extension(path):
     for k, v in prefs['extensions']['settings'].items():
         if '/sgactions/browser_addons/Chrome' in v.get('path', ''):
             if k == ext_id:
-                print 'Already installed'
+                print '\t\tAlready installed'
             else:
-                print 'Removing', v['path']
+                print '\t\tRemoving', v['path']
                 del prefs['extensions']['settings'][k]
+                changed = True
     
-    # Get the existing state.
-    state = int(bool(prefs['extensions']['settings'].get(ext_id, {}).get('state', True)))
-    
-    # Update the settings.
-    prefs['extensions']['settings'][ext_id] = {
-       "active_permissions": {
-          "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
-       },
-       "events": [ "runtime.onInstalled" ],
-       "from_bookmark": False,
-       "from_webstore": False,
-       "granted_permissions": {
-          "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
-       },
-       "install_time": "12992636740554400",
-       "location": 4,
-       "newAllowFileAccess": True,
-       "path": ext_path,
-       "state": state
-    }
-    
-    json.dump(prefs, open(path, 'w'), indent=4, sort_keys=True)
+    # Install the extension.
+    if ext_id not in prefs['extensions']['settings']:
+        print '\t\tInstalling', ext_path
+        prefs['extensions']['settings'][ext_id] = {
+           "active_permissions": {
+              "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+           },
+           "events": [ "runtime.onInstalled" ],
+           "from_bookmark": False,
+           "from_webstore": False,
+           "granted_permissions": {
+              "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+           },
+           "install_time": "12992636740554400",
+           "location": 4,
+           "newAllowFileAccess": True,
+           "path": ext_path,
+           "state": 1
+        }
+        changed = True
+        
+    if changed:
+        print '\t\tWriting changes...'
+        json.dump(prefs, open(path, 'w'), indent=4, sort_keys=True)
 
     
 def main():
@@ -70,7 +76,7 @@ def main():
         for line in proc.stdout:
             m = re.match(r'\s*path:\s*(.+?/sgactions/.+?\.app)\s*$', line)
             if m and m.group(1) != handler:
-                print m.group(1)
+                print '\t' + m.group(1)
                 call([lsregister, '-u', m.group(1)], stdout=PIPE, stderr=PIPE)
         print 'Registering new handler...'
         call([
