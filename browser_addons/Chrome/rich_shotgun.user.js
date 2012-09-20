@@ -1,21 +1,23 @@
-// ==UserScript==
-// @name       SGActions Icons
-// @namespace  http://use.i.E.your.homepage/
-// @downloadURL http://keyweb/Volumes/VFX/home/mboers/key_tools/sgactions/custom_icons.js
-// @version    0.1.1
-// @description  Monkey-patch icons onto Shotgun ActionMenuItems
-// @match      http*://*.shotgunstudio.com/*
-// @copyright  2012+, Western X
-// @run-at document-end
-// ==/UserScript==
-
 var link = document.createElement("link");
 link.setAttribute("rel", "stylesheet");
 link.setAttribute("type", "text/css");
 link.setAttribute("href", 'https://silk-icons-css.googlecode.com/hg/silk-icons.css');
 document.getElementsByTagName('head')[0].appendChild(link);   
 
+
+// Define unsafeWindow in browsers where it doesn't exist.
+window.unsafeWindow || (
+    unsafeWindow = (function() {
+        var el = document.createElement('p');
+        el.setAttribute('onclick', 'return window;');
+        return el.onclick();
+    }())
+);
+
+console.log('Starting SGActions: rich ActionMenuItems')
+
 var original = unsafeWindow.SG.Menu.prototype.render_menu_items;
+
 unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
     render_menu_items: function() {
         var last_heading = null;
@@ -35,15 +37,23 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
                         }
                     }
                     
-                    // Title and icon.
-                    this.items[i].html = (rich.t || this.items[i].html);
+                    // Title.
+                    if (rich.t) {
+                        this.items[i].html_backup = this.items[i].html;
+                        this.items[i].html = rich.t;
+                    }
+                    
+                    // Icon.
                     this.items[i].icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
+                    
                     // Headings.
                     if (rich.h != last_heading) {
                         this.items[i].heading = rich.h;
                         this.items[i].line = !rich.h;
                     }
                     last_heading = rich.h;
+                    
+                    console.log('render_menu_items', i, this.items[i]);
                     
                 }
             }
@@ -54,7 +64,8 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
         
         // this.items.push({html: "Submenu test", submenu:{items:[{html: 'Child'}]}});
         
-        console.log('render_menu_items', this.items);
         return original.apply(this, arguments);
     }
 });
+
+
