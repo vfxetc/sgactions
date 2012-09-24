@@ -20,16 +20,20 @@ var original = unsafeWindow.SG.Menu.prototype.render_menu_items;
 
 unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
     render_menu_items: function() {
-        var last_heading = null;
+        
         try {
+            
+            // Parse and set the data.
             for (var i = 0; i < this.items.length; i++) {
                 if (this.items[i].url && /^sgaction/.test(this.items[i].url)) {
                     
+                    var item = this.items[i];
+                    
                     // Parse the rich data.
                     var rich = {};
-                    var m = /^(.+?)\/(.+?)$/.exec(this.items[i].url);
+                    var m = /^(.+?)\/(.+?)$/.exec(item.url);
                     if (m) {
-                        this.items[i].url = m[1]
+                        item.url = m[1]
                         var pairs = m[2].split('&');
                         for (var j = 0; j < pairs.length; j++) {
                             var pair = pairs[j].split('=');
@@ -37,26 +41,29 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
                         }
                     }
                     
-                    // Title.
-                    if (rich.t) {
-                        this.items[i].html_backup = this.items[i].html;
-                        this.items[i].html = rich.t;
-                    }
-                    
-                    // Icon.
-                    this.items[i].icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
-                    
-                    // Headings.
-                    if (rich.h != last_heading) {
-                        this.items[i].heading = rich.h;
-                        this.items[i].line = !rich.h;
-                    }
-                    last_heading = rich.h;
-                    
-                    console.log('render_menu_items', i, this.items[i]);
-                    
+                    item.html = rich.t || item.html;
+                    item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
+                    item.heading = rich.h;
                 }
             }
+            
+            // Collapse headings and lines.
+            var last_heading = null;
+            for (var i = 0; i < this.items.length; i++) {
+                
+                // Headings.
+                if (this.items[i].heading == last_heading) {
+                    this.items[i].heading = null
+                } else {
+                    last_heading = this.items[i].heading;
+                }
+                
+                // Double lines before headline changes.
+                if (i && this.items[i].heading && this.items[i-1].line && !this.items[i-1].html) {
+                    this.items[i-1].line = false;
+                }
+            }
+            
         
         } catch (err) {
             console.log(err);
