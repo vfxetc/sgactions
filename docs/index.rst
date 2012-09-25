@@ -103,6 +103,8 @@ and on a Task on our testing server outputs::
     user_id = 108
     user_login = '<snipped>'
     
+Of particular interest is ``project_id``, which will appear in most cases and so may appear to be a constant argument, but it will not be passed along from cross-project pages, such as user pages.
+
 
 Debugging
 ---------
