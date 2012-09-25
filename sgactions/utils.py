@@ -15,6 +15,6 @@ def notify(message, title="SGActions", sticky=False):
     else:
         argv = ['notify-send']
         if sticky:
-            argv.extend(['-t', 3600000])
+            argv.extend(['-t', '3600000'])
         argv.extend([title, message])
     call(argv)
