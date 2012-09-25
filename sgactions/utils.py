@@ -2,8 +2,17 @@ from subprocess import call
 import platform
 
 
-def notify(message, title="SGActions", sticky=False):
+def notify(message, title=None, sticky=False):
+    
+    if title is None:
+        title = 'SGActions'
+
+    print '=' * len(str(title))
+    print str(title)
+    print '=' * len(str(title))
     print message
+    print '---'
+    
     if platform.system() == 'Darwin':
         argv = ['growlnotify',
             '--name', 'Shotgun Action Dispatcher',
