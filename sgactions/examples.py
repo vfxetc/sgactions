@@ -1,12 +1,20 @@
 import os
 
+from . import utils
+
 
 def dump_kwargs(**kwargs):
-    for k, v in sorted(kwargs.iteritems()):
-        print '%s = %r' % (k, v)
+    utils.notify(
+        title='%s Kwargs' % kwargs.get('entity_type', 'Unknown'),
+        message='\n'.join('%s = %r' % x for x in sorted(kwargs.iteritems())),
+        sticky=True,
+    )
 
 
 def dump_environ(**kwargs):
-    for k, v in sorted(os.environ.iteritems()):
-        print '%s = %r' % (k, v)
+    utils.notify(
+        title='%s Environ' % kwargs.get('entity_type', 'Unknown'),
+        message='\n'.join('%s = %r' % x for x in sorted(os.environ.iteritems())),
+        sticky=True,
+    )
 
