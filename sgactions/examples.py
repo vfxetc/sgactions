@@ -18,3 +18,6 @@ def dump_environ(**kwargs):
         sticky=True,
     )
 
+
+def raise_error(**kwargs):
+    raise ValueError('This is a test')

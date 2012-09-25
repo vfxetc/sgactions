@@ -6,7 +6,6 @@
         title: Show Environment
         icon: bricks
     list_order: 91
-    # entity_types: [None]
 
 -
     entrypoint: sgactions.examples:dump_kwargs
@@ -16,4 +15,11 @@
         title: Show Kwargs
         icon: bricks
     list_order: 92
-    # entity_types: [None]
+-
+    entrypoint: sgactions.examples:raise_error
+    title: "Development: Raise Error"
+    rich:
+        heading: Development
+        title: Raise Error
+        icon: bricks
+    list_order: 93
