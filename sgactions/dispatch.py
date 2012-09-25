@@ -6,7 +6,7 @@ import traceback
 import urlparse
 
 from . import utils
-
+from . import tickets
 
 def main(url):
     
@@ -40,65 +40,14 @@ def main(url):
         function(**query)
     
     except Exception, e:
-        
-        exc_message = traceback.format_exc().rstrip()
-        query_message = '\n'.join('%s = %r' % x for x in sorted(query.iteritems()))
-        environ_message = '\n'.join('%s = %r' % x for x in sorted(os.environ.iteritems()))
-        print exc_message
-        print '---'
-        print query_message
-        print '---'
-        print environ_message
-        print '---'
-        
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        
-        hasher = hashlib.sha256(str(exc_type))
-        for file_name, line_no, func_name, source in traceback.extract_tb(exc_traceback):
-            hasher.update('\n' + file_name + ':' + func_name + ':' + (source or ''))
-        mini_uuid = hasher.hexdigest()[:8]
-        
         try:
-            
-            import shotgun_api3_registry
-            server = 'https://' + query['server_hostname']
-            shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch', server=server)
-        
-            # Decide what project to attach to. This won't work well on anything
-            # but ours.
-            if query['server_hostname'] == 'keystone.shotgunstudio.com':
-                project = dict(type='Project', id=74)
-            else:
-                project = dict(type='Project', id=query.get('project_id', 1))
-        
-            # Look for an existing ticket.
-            ticket = shotgun.find_one('Ticket', [('title', 'ends_with', '[%s]' % mini_uuid)])
-            if ticket:
-                print 'Ticket', ticket['id'], 'found'
-        
-            # Create a new ticket.
-            else:
-                ticket = shotgun.create('Ticket', dict(
-                    title='%s: %s [%s]' % (exc_type.__name__, e, mini_uuid),
-                    sg_status_list='rev', # Pending Review.
-                    project=project,
-                ))
-                print 'Ticket', ticket['id'], 'created'
-        
-            # Create a reply to that ticket with the traceback.
-            reply = dict(content=exc_message + '\n\n' + query_message + '\n\n' + environ_message, entity=ticket)
-            if 'user_id' in query:
-                reply['user'] = dict(type='HumanUser', id=query['user_id'])
-            created = shotgun.create('Reply', reply)
-            print 'Reply', created['id'], 'created'
-        
+            exc_uuid, ticket_id, reply_id = tickets.ticket_exception(kwargs=query)
             utils.notify(
                 title='SGAction Error',
-                message='%s: %s\nReplied to Ticket %d [%s].' % (exc_type.__name__, e, ticket['id'], mini_uuid),
+                message='%s: %s\nReplied to Ticket %d [%s].' % (type(e).__name__, e, ticket_id, exc_uuid),
                 sticky=True,
             )
-        
-        except Exception as e2:
+        except Exception, e2:
             utils.notify(
                 title='SGAction Fatal Error',
                 message='Error while handling error:\n%r from %r' % (e2, e),
