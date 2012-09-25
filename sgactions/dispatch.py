@@ -59,7 +59,7 @@ def main(url):
             
             import shotgun_api3_registry
             server = 'https://' + query['server_hostname']
-            shotgun = shotgun_api3_registry.connect(server=server)
+            shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch', server=server)
         
             # Decide what project to attach to. This won't work well on anything
             # but ours.
