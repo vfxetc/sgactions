@@ -50,7 +50,7 @@ def main(url):
         except Exception, e2:
             utils.notify(
                 title='SGAction Fatal Error',
-                message='Error while handling error:\n%r from %r' % (e2, e),
+                message='Error while handling error:\n%r from %r\n---\n%s' % (e2, e, traceback.format_exc()),
                 sticky=True,
             )
                 

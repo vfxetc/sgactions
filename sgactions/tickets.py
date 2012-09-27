@@ -33,16 +33,16 @@ def ticket_exception(args=None, kwargs=None, include_environ=True):
     import shotgun_api3_registry
     shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch')
     project = dict(type='Project', id=74)
-        
+    
     # Look for an existing ticket, or create a new one.
     ticket = shotgun.find_one('Ticket', [('title', 'ends_with', '[%s]' % mini_uuid)])
     if ticket is None:
         ticket = shotgun.create('Ticket', dict(
-            title='%s: %s [%s]' % (exc_type.__name__, e, mini_uuid),
+            title='%s: %s [%s]' % (exc_type.__name__, exc_value, mini_uuid),
             sg_status_list='rev', # Pending Review.
             project=project,
         ))
-        
+    
     # Create a reply to that ticket with the traceback.
     reply = dict(content='\n\n'.join('%s\n%s\n%s' % (name, '='*len(name), content) for name, content in parts), entity=ticket)
     if 'user_id' in kwargs:
