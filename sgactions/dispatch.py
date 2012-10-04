@@ -56,6 +56,16 @@ def main(url):
                 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    
+    # Really long URLs may come from tempfiles.
+    if len(sys.argv) == 3 and sys.argv[1] == '-f':
+        path = sys.argv[2]
+        url = open(path).read()
+        os.unlink(path)
+    
+    else:
+        url = sys.argv[1]
+    
+    main(url)
     
     

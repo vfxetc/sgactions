@@ -2,7 +2,7 @@
 
 import os
 import sys
-
+import tempfile
 
 # Perform sys.argv emulation.
 sys.path.append(os.path.dirname(__file__))
@@ -11,4 +11,16 @@ import argv_emulation
 
 # Handoff to environment bootstrapper.
 bootstrap = os.path.join(os.path.dirname(__file__), 'bootstrap_environ')
-os.execv(bootstrap, [bootstrap, sys.argv[-1]])
+try:
+    os.execv(bootstrap, [bootstrap, sys.argv[-1]])
+except OSError as e:
+    # "Argument list too long"
+    if e.errno != 7:
+        raise
+
+# Dump it into a temporary file instead.
+fd, path = tempfile.mkstemp()
+fh = os.fdopen(fd, 'w')
+fh.write(sys.argv[-1])
+fh.close()
+os.execv(bootstrap, [bootstrap, '-f', path])

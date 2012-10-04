@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 script_name=$(echo "$0" | sed -E 's,([^:]+):,/\1,g')
-echo "$script_name" dispatching "$1"
+echo "$script_name" dispatching "${1:0:4096}" "(${#1})"
 
 # Build the environment if it doesn't already exist. We try to recreate the
 # bash environment as if invocated with `--login`.
@@ -22,7 +22,7 @@ if [[ "$SHLVL" < 2 ]]; then
 fi
 
 # Launch it in the background.
-python -m sgactions.dispatch "$1" &
+python -m sgactions.dispatch $@ &
 
 # Disconnect it from this shell.
 disown %%
