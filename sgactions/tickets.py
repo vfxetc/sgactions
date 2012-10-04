@@ -1,7 +1,8 @@
-import os
-import traceback
 import hashlib
+import os
 import sys
+import textwrap
+import traceback
 
 
 def ticket_exception(args=None, kwargs=None, include_environ=True):
@@ -13,7 +14,11 @@ def ticket_exception(args=None, kwargs=None, include_environ=True):
     if kwargs is not None:
         parts.append(('Kwargs', '\n'.join('%s = %r' % x for x in sorted(kwargs.iteritems()))))
     if include_environ:
-        parts.append(('Environ', '\n'.join('%s = %r' % x for x in sorted(os.environ.iteritems()))))
+        blob = '\n'.join(
+            textwrap.fill('%s = %r' % x, 80)
+            for x in sorted(os.environ.iteritems())
+        )
+        parts.append(('Environ', blob))
     
     for name, content in parts:
         print name
