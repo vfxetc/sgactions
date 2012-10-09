@@ -3,7 +3,7 @@
 sgactions
 =========
 
-This Python package is a wrapper around ``ActionMenuItems`` in `Shotgun <http://www.shotgunsoftware.com/>`_ providing a simple interface to Python callables via a `YAML <http://www.yaml.org>`_ configuration. It also has an optional `Greasemonkey <http://en.wikipedia.org/wiki/Greasemonkey>`_-style user script to allow to injection of icons, and headings.
+This Python package is a wrapper around ``ActionMenuItems`` in `Shotgun <http://www.shotgunsoftware.com/>`_ providing a simple interface to Python callables via a `YAML <http://www.yaml.org>`_ configuration. It also has an optional `Greasemonkey <http://en.wikipedia.org/wiki/Greasemonkey>`_-style user script to allow to injection of icons and headings.
 
 .. image:: _static/icons-screenshot.png
 
@@ -24,7 +24,7 @@ or into the system wide folder::
 
     cp LaunchAgents/com.westernx.sgactions.plist /Library/LaunchAgents/
 
-This script will also automatically install our Google Chrome extension for adding icons, and headings. The changes will only take hold if the register command is run after Chrome has run for the first time and while Chrome is not running.
+This script will also automatically install our Google Chrome extension for adding icons, and headings. The changes will only take hold if the register command is run after Chrome has run for the first time and while Chrome is not running. This extension is known to work for Shotgun v4.0 through v4.1
 
 Whenever a new version of sgactions is installed, re-registering may be required, and it will clean up any old hooks it may have left in your system.
 
