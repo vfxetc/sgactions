@@ -41,7 +41,7 @@ def main(url):
     
     except Exception, e:
         try:
-            exc_uuid, ticket_id, reply_id = tickets.ticket_exception(kwargs=query)
+            exc_uuid, ticket_id, reply_id = tickets.create_ticket(*sys.exc_info(), kwargs=query)
             utils.notify(
                 title='SGAction Error',
                 message='%s: %s\nReplied to Ticket %d [%s].' % (type(e).__name__, e, ticket_id, exc_uuid),
