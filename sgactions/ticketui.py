@@ -53,7 +53,10 @@ class Dialog(QtGui.QDialog):
         
         self._screenshot_path = None
         self._screenshot = QtGui.QLabel()
-        self._screenshot.setFixedSize(100, 100)
+        self._screenshot.setFixedSize(133, 100)
+        self._screenshot.setPixmap(QtGui.QPixmap(os.path.abspath(os.path.join(
+            __file__, '..', '..', 'art', 'no_screenshot.png'
+        ))).scaledToHeight(100, Qt.SmoothTransformation))
         self._screenshot.setFrameShadow(QtGui.QFrame.Sunken)
         self._screenshot.setFrameShape(QtGui.QFrame.Panel)
         self._screenshot.mouseReleaseEvent = self._on_screenshot
