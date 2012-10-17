@@ -6,6 +6,7 @@ import sys
 import subprocess
 import platform
 import tempfile
+import os
 
 from PyQt4 import QtCore, QtGui
 Qt = QtCore.Qt
@@ -28,22 +29,25 @@ class Dialog(QtGui.QDialog):
         self.setLayout(QtGui.QFormLayout())
         
         self._exception = QtGui.QComboBox()
-        self._exception.addItem('None')
+        self._exception.addItem('None', None)
         for exc_type, exc_value, exc_traceback in self._exception_list:
-            self._exception.addItem('%s: %s [%s]' % (exc_type.__name__, exc_value,
-                tickets.exception_hash(exc_type, exc_value, exc_traceback),
-            ))
+            self._exception.addItem(
+                '%s: %s [%s]' % (exc_type.__name__, exc_value, tickets.exception_uuid(exc_type, exc_value, exc_traceback)),
+                (exc_type, exc_value, exc_traceback),
+            )
         self._exception.setCurrentIndex(self._exception.count() - 1)
+        self._exception.currentIndexChanged.connect(self._on_exception)
         self.layout().addRow("Exception", self._exception)
         
-        self._ticket = QtGui.QComboBox()
-        self._ticket.addItem("New")
-        self.layout().addRow("Ticket", self._ticket)
+        # self._ticket = QtGui.QComboBox()
+        # self._ticket.addItem("New")
+        # self.layout().addRow("Ticket", self._ticket)
         
-        self._title = QtGui.QLineEdit('Title')
-        self.layout().addRow("Title", self._title)
+        self._title_label = QtGui.QLabel("Title")
+        self._title = QtGui.QLineEdit('Bug Report')
+        self.layout().addRow(self._title_label, self._title)
         
-        self._description = QtGui.QTextEdit('Description')
+        self._description = QtGui.QTextEdit('Please describe the problem, and any steps to reproduce it and/or fix it.')
         self._description.focusInEvent = lambda *args: self._description.selectAll()
         self.layout().addRow("Description", self._description)
         
@@ -67,7 +71,13 @@ class Dialog(QtGui.QDialog):
         button.clicked.connect(self._on_submit)
         buttons.addWidget(button)
         
-        self._title.selectAll()
+        self._description.selectAll()
+        self._on_exception(self._exception.currentIndex())
+    
+    def _on_exception(self, exc_index):
+        exc_info = self._exception.itemData(exc_index).toPyObject()
+        self._title_label.setVisible(not exc_info)
+        self._title.setVisible(not exc_info)
     
     def _on_screenshot(self, *args):
         self.hide()
@@ -84,13 +94,29 @@ class Dialog(QtGui.QDialog):
         pixmap = QtGui.QPixmap(path).scaledToHeight(100, Qt.SmoothTransformation)
         self._screenshot.setPixmap(pixmap)
         self._screenshot.setFixedSize(pixmap.size())
-            
+    
+    def description(self):
+        return str(self._description.toPlainText())
+    
+    def _get_reply_data(self):
+        return [
+            ('User Comment', str(self._description.toPlainText())),
+            ('OS Environment', dict(os.environ)),
+        ]
+    
     def _on_submit(self, *args):
-        exc_uuid, ticket_id, reply_id = tickets.create_ticket(
-            title=str(self._title.text()),
-            description=str(self._description.toPlainText()),
-            attachments=[self._screenshot_path],
-        )
+        
+        exc_index = self._exception.currentIndex()
+        exc_info = self._exception.itemData(exc_index).toPyObject()
+        if exc_info:
+            title = None
+        else:
+            exc_info = exc_info or (None, None, None)
+            title = str(self._title.text())
+        ticket_id = tickets.get_ticket_for_exception(*exc_info, title=title)
+        reply_id = tickets.reply_to_ticket(ticket_id, self._get_reply_data(), user_id=tickets.guess_user_id())
+        if self._screenshot_path:
+            tickets.attach_to_ticket(ticket_id, self._screenshot_path)
         self.close()
         QtGui.QMessageBox.information(None,
             'Ticket Created',

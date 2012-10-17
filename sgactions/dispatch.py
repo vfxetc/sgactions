@@ -41,10 +41,15 @@ def main(url):
     
     except Exception, e:
         try:
-            exc_uuid, ticket_id, reply_id = tickets.create_ticket(*sys.exc_info(), kwargs=query)
+            ticket_id = tickets.get_ticket_for_exception(*sys.exc_info())
+            reply_id = tickets.reply_to_ticket(ticket_id, [
+                ('Exception', sys.exc_info()),
+                ('SGAction Kwargs', query),
+                ('OS Environment', dict(os.environ)),
+            ], user_id=query.get('user_id'))
             utils.notify(
                 title='SGAction Error',
-                message='%s: %s\nReplied to Ticket %d [%s].' % (type(e).__name__, e, ticket_id, exc_uuid),
+                message='%s: %s\nReplied to Ticket %d.' % (type(e).__name__, e, ticket_id),
                 sticky=True,
             )
         except Exception, e2:
