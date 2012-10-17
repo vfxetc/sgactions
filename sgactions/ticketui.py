@@ -98,23 +98,25 @@ class Dialog(QtGui.QDialog):
     def description(self):
         return str(self._description.toPlainText())
     
-    def _get_reply_data(self):
-        return [
-            ('User Comment', str(self._description.toPlainText())),
-            ('OS Environment', dict(os.environ)),
-        ]
+    def _get_reply_data(self, exc_info):
+        data = [('User Comment', str(self._description.toPlainText()))]
+        if exc_info:
+            data.append(('Traceback', exc_info))
+        data.append(('OS Environment', dict(os.environ)))
+        return data
     
     def _on_submit(self, *args):
         
         exc_index = self._exception.currentIndex()
         exc_info = self._exception.itemData(exc_index).toPyObject()
+        data = self._get_reply_data(exc_info)
         if exc_info:
             title = None
         else:
             exc_info = exc_info or (None, None, None)
             title = str(self._title.text())
         ticket_id = tickets.get_ticket_for_exception(*exc_info, title=title)
-        reply_id = tickets.reply_to_ticket(ticket_id, self._get_reply_data(), user_id=tickets.guess_user_id())
+        reply_id = tickets.reply_to_ticket(ticket_id, data, user_id=tickets.guess_user_id())
         if self._screenshot_path:
             tickets.attach_to_ticket(ticket_id, self._screenshot_path)
         self.close()
