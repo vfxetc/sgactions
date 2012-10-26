@@ -8,6 +8,9 @@ import json
 import hashlib
 
 
+sgactions_root = os.path.abspath(os.path.join(__file__, '..', '..'))
+
+
 _google_hash_map = {}
 for i, c in enumerate('0123456789abcdef'):
     _google_hash_map[c] = chr(ord('a') + i)
@@ -84,21 +87,35 @@ def main():
             '-v',
             handler,
         ])
-        print 'Installing Chrome extension...'
-        install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Preferences'))
-        install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary/Default/Preferences'))
-        print 'Done.'
     
     elif platform.system() == 'Linux':
         call([
             os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
         ])
-        print 'Installing Chrome extension...'
-        install_chrome_extension(os.path.expanduser('~/.config/google-chrome/Default/Preferences'))
-        print 'Done.'
     
     else:
         print 'We are not setup for protocol handlers on %s' % platform.system()
+        
+
+    print 'Installing Chrome extension...'
+    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Preferences'))
+    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary/Default/Preferences'))
+    install_chrome_extension(os.path.expanduser('~/.config/google-chrome/Default/Preferences'))
+    print 'Done.'
+    
+    print 'Installing OS X Services...'
+    
+    for service_name in os.listdir(os.path.join(sgactions_root, 'Services')):
+        if service_name.startswith('.'):
+            continue
+        print '\t' + service_name
+        call(['cp', '-r', os.path.join(sgactions_root, 'Services', service_name), os.path.expanduser('~/Library/Services/')])
+    
+    if platform.system() == 'Darwin':
+        print 'Refreshing services...'
+        call(['/System/Library/CoreServices/pbs', '-flush'])
+    
+    print 'Done.'
 
 
 if __name__ == '__main__':
