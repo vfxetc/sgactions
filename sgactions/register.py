@@ -72,8 +72,10 @@ def install_chrome_extension(path):
 def main():
     
     if platform.system() == 'Darwin':
+        
         lsregister = '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister'
         handler = os.path.abspath(os.path.join(__file__, '..', '..', 'Shotgun Action Dispatcher.app'))
+        
         print 'Cleaning old handlers...'
         proc = Popen([lsregister, '-dump'], stdout=PIPE, stderr=PIPE)
         for line in proc.stdout:
@@ -81,20 +83,24 @@ def main():
             if m and m.group(1) != handler:
                 print '\t' + m.group(1)
                 call([lsregister, '-u', m.group(1)], stdout=PIPE, stderr=PIPE)
+        
         print 'Registering new handler...'
         call([
             lsregister,
             '-v',
             handler,
         ])
+        
+        print 'Done.'
     
     elif platform.system() == 'Linux':
+        # All of the logic is in a shell script.
         call([
             os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
         ])
     
     else:
-        print 'We are not setup for protocol handlers on %s' % platform.system()
+        print 'Cannot install protocol handlers on %s' % platform.system()
         
 
     print 'Installing Chrome extension...'
@@ -105,12 +111,22 @@ def main():
     
     print 'Installing OS X Services...'
     
-    for service_name in os.listdir(os.path.join(sgactions_root, 'Services')):
+    our_services = os.path.join(sgactions_root, 'Services')
+    system_services = os.path.expanduser(os.path.join('~', 'Library', 'Services'))
+    for service_name in os.listdir(our_services):
         if service_name.startswith('.'):
             continue
         print '\t' + service_name
-        call(['cp', '-r', os.path.join(sgactions_root, 'Services', service_name), os.path.expanduser('~/Library/Services/')])
-    
+        
+
+        src = os.path.join(our_services, service_name)
+        dst = os.path.join(system_services, service_name)
+        
+        # Try to make the folder first so that it puts it where I expect it to,
+        # since I've been having issues with this copy.
+        call(['mkdir', '-p', dst])
+        call(['rsync', '-ax', '--delete', src + '/', dst + '/'])
+        
     if platform.system() == 'Darwin':
         print 'Refreshing services...'
         call(['/System/Library/CoreServices/pbs', '-flush'])
