@@ -65,11 +65,20 @@ def get_ticket_for_exception(exc_type=None, exc_value=None, exc_traceback=None, 
     else:
         ticket = None
     if ticket is None:
+        
         if title is None:
             if exc_type and exc_value:
                 title = '%s: %s' % (exc_type.__name__, exc_value)
+                # Automatically truncate to 255 chars. Remember that the uuid
+                # tag will consume 11, and another 3 for ellipsis.
+                if len(title) > (255 - 11):
+                    title = title[:255 - 11 - 3] + '...'
             else:
                 title = 'New Ticket'
+        
+        elif len(title) > (255 - 11):
+            raise ValueError("title is too long; must be no longer than 244")
+        
         uuid_tag = ' [%s]' % mini_uuid if mini_uuid else ''
         ticket = shotgun.create('Ticket', dict(
             title='%s%s' % (title, uuid_tag),
