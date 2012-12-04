@@ -161,10 +161,12 @@ def handle_current_exception():
     # Returns an int of the button code. Our custom one is 0.
     res = msgbox.exec_()
     if res:
-        return
+        return False
         
     dialog = Dialog([(type_, value, traceback)], allow_no_exception=False)
     dialog.show()
+    
+    return True
 
     
 __also_reload__ = [
