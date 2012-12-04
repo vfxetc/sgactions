@@ -74,6 +74,7 @@ class Dialog(QtGui.QDialog):
         button.clicked.connect(self._on_submit)
         buttons.addWidget(button)
         
+        self._description.setFocus()
         self._description.selectAll()
         self._on_exception(self._exception.currentIndex())
     
