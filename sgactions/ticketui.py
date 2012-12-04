@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
-import traceback
-import time
-import sys
-import subprocess
-import platform
-import tempfile
+import contextlib
 import os
+import platform
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
 
 from PyQt4 import QtCore, QtGui
 Qt = QtCore.Qt
@@ -50,10 +51,6 @@ class Dialog(QtGui.QDialog):
         else:
             self.layout().addRow("Exception", self._exception)
         
-        # self._ticket = QtGui.QComboBox()
-        # self._ticket.addItem("New")
-        # self.layout().addRow("Ticket", self._ticket)
-        
         self._title_label = QtGui.QLabel("Title")
         self._title = QtGui.QLineEdit('Bug Report')
         self.layout().addRow(self._title_label, self._title)
@@ -75,9 +72,6 @@ class Dialog(QtGui.QDialog):
         
         buttons = QtGui.QHBoxLayout()
         self.layout().addRow("", buttons)
-        
-        # button = QtGui.QPushButton('Add Screenshot')
-        # buttons.addWidget(button)
         
         buttons.addStretch()
         
@@ -141,7 +135,7 @@ class Dialog(QtGui.QDialog):
         )
 
 
-def handle_current_exception():
+def ticket_current_exception(dialog_class=None):
 
     msgbox = QtGui.QMessageBox()
     
@@ -162,16 +156,23 @@ def handle_current_exception():
     res = msgbox.exec_()
     if res:
         return False
-        
-    dialog = Dialog([(type_, value, traceback)], allow_no_exception=False)
+    
+    dialog_class = dialog_class or Dialog
+    dialog = dialog_class([(type_, value, traceback)], allow_no_exception=False)
     dialog.show()
     
     return True
 
-    
-__also_reload__ = [
-    'sgactions.tickets',
-]
+
+@contextlib.contextmanager
+def ticket_ui_context(reraise=True, dialog_class=None):
+    try:
+        yield
+    except:
+        submitted = ticket_current_exception(dialog_class=dialog_class)
+        if reraise or (reraise is None and not submitted):
+            raise
+
 
 def __before_reload__():
     # We have to manually clean this, since we aren't totally sure it will
