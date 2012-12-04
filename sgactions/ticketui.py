@@ -169,8 +169,8 @@ def ticket_ui_context(reraise=True, dialog_class=None):
     try:
         yield
     except:
-        submitted = ticket_current_exception(dialog_class=dialog_class)
-        if reraise or (reraise is None and not submitted):
+        not_ignored = ticket_current_exception(dialog_class=dialog_class)
+        if reraise or (reraise is None and not not_ignored):
             raise
 
 
