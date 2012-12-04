@@ -15,12 +15,16 @@ import shotgun_api3_registry
 
 from . import tickets
 
+__also_reload__ = ['.tickets']
+
 
 class Dialog(QtGui.QDialog):
     
-    def __init__(self, exceptions=None):
+    def __init__(self, exceptions=None, allow_no_exception=True):
         super(Dialog, self).__init__()
+        
         self._exception_list = list(exceptions or [])
+        self._allow_no_exception = allow_no_exception
         self._setup_ui()
     
     def _setup_ui(self):
@@ -29,7 +33,10 @@ class Dialog(QtGui.QDialog):
         self.setLayout(QtGui.QFormLayout())
         
         self._exception = QtGui.QComboBox()
-        self._exception.addItem('None', None)
+        
+        if self._allow_no_exception:
+            self._exception.addItem('None', None)
+        
         for exc_type, exc_value, exc_traceback in self._exception_list:
             self._exception.addItem(
                 '%s: %s [%s]' % (exc_type.__name__, exc_value, tickets.exception_uuid(exc_type, exc_value, exc_traceback)),
@@ -37,7 +44,11 @@ class Dialog(QtGui.QDialog):
             )
         self._exception.setCurrentIndex(self._exception.count() - 1)
         self._exception.currentIndexChanged.connect(self._on_exception)
-        self.layout().addRow("Exception", self._exception)
+        
+        if not self._allow_no_exception and len(self._exception_list) == 1:
+            self.layout().addRow("Exception", QtGui.QLabel(self._exception.currentText()))
+        else:
+            self.layout().addRow("Exception", self._exception)
         
         # self._ticket = QtGui.QComboBox()
         # self._ticket.addItem("New")
@@ -130,6 +141,32 @@ class Dialog(QtGui.QDialog):
         )
 
 
+def handle_current_exception():
+
+    msgbox = QtGui.QMessageBox()
+    
+    type_, value, traceback = sys.exc_info()
+    
+    msgbox.setIcon(msgbox.Critical)
+    msgbox.setWindowTitle('Python Exception')
+    msgbox.setText("Uncaught Python Exception: %s" % type_.__name__)
+    msgbox.setInformativeText(str(value))
+    
+    msgbox.addButton("Submit Ticket", msgbox.AcceptRole)
+    
+    ignore = msgbox.addButton(msgbox.Ignore)
+    msgbox.setDefaultButton(ignore) # <- This does not seem to do much.
+    msgbox.setEscapeButton(ignore)
+    
+    # Returns an int of the button code. Our custom one is 0.
+    res = msgbox.exec_()
+    if res:
+        return
+        
+    dialog = Dialog([(type_, value, traceback)], allow_no_exception=False)
+    dialog.show()
+
+    
 __also_reload__ = [
     'sgactions.tickets',
 ]
