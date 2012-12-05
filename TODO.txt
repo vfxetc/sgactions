@@ -1,3 +1,8 @@
-- Better exception handling; log into a Ticket on Shotgun.
+
 - Stub for people without shotgun_api3_registry.
+
 - Logging via `logging` instead of via stdout.
+
+- sgactions rich ACL
+    - e.g.: group==Admin, group==Manager
+    - disable menu items
