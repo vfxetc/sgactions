@@ -16,8 +16,6 @@ import shotgun_api3_registry
 
 from . import tickets
 
-__also_reload__ = ['.tickets']
-
 
 class Dialog(QtGui.QDialog):
     
