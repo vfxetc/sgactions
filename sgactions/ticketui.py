@@ -189,4 +189,3 @@ def run():
         dialog.close()
     dialog = Dialog()
     dialog.show()
-        
