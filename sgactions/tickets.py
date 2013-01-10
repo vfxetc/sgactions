@@ -1,7 +1,5 @@
 import hashlib
 import os
-import sys
-import textwrap
 import traceback
 import re
 import types

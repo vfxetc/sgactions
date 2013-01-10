@@ -1,5 +1,4 @@
 import optparse
-from pprint import pprint
 import sys
 import urllib
 

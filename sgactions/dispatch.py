@@ -1,4 +1,3 @@
-import hashlib
 import os
 import re
 import sys
@@ -42,7 +41,7 @@ def main(url):
     except Exception, e:
         try:
             ticket_id = tickets.get_ticket_for_exception(*sys.exc_info())
-            reply_id = tickets.reply_to_ticket(ticket_id, [
+            tickets.reply_to_ticket(ticket_id, [
                 ('Exception', sys.exc_info()),
                 ('SGAction Kwargs', query),
                 ('OS Environment', dict(os.environ)),
