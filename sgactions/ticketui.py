@@ -138,8 +138,15 @@ def ticket_current_exception(dialog_class=None):
     msgbox.setIcon(msgbox.Critical)
     msgbox.setWindowTitle('Python Exception')
     msgbox.setText("Uncaught Python Exception: %s" % type_.__name__)
-    msgbox.setInformativeText(str(value))
     
+    if str(value) == 'super(type, obj): obj must be an instance or subtype of type':
+        msgbox.setInformativeText(
+            '%s<br/><br/>'
+            '<b><i>This appears to be a code reloading issue. '
+            'Restarting this program should fix it.</i></b>' % value)
+    else:
+        msgbox.setInformativeText(str(value))
+
     msgbox.addButton("Submit Ticket", msgbox.AcceptRole)
     
     ignore = msgbox.addButton(msgbox.Ignore)
