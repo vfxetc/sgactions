@@ -3,6 +3,7 @@ import os
 import traceback
 import re
 import types
+import textwrap
 
 
 def guess_user_id():
@@ -104,6 +105,7 @@ def reply_to_ticket(ticket_id, content, user_id=None):
     
     if isinstance(content, dict):
         content = sorted(content.iteritems())
+
     if not isinstance(content, basestring):
         parts = []
         for heading, part in content:
@@ -133,13 +135,21 @@ def reply_to_ticket(ticket_id, content, user_id=None):
             else:
                 parts.append((heading, str(part)))
         
+        # Join the parts.
         content = '\n\n'.join('%s\n%s\n%s' % (heading, '=' * len(heading), part) for heading, part in parts)
-        
+
+        # Line wrap (each line seperately).
+        line_width = 100
+        content = '\n'.join(textwrap.fill(line, line_width, break_long_words=False, replace_whitespace=False) for line in content.splitlines())
+
         # Break up long words.
         def break_long(m):
             word = m.group(1)
-            return '\\\n'.join(word[i:i+80] for i in xrange(0, len(word), 80))
-        content = re.sub(r'(\S{80,})', break_long, content)
+            return '\\\n'.join(word[i:i+line_width] for i in xrange(0, len(word), line_width))
+        content = re.sub(r'(\S{%d,})' % line_width, break_long, content)
+
+        # Don't mark it up.
+        content = 'bc..\n' + content
     
     # Create a reply to that ticket with the traceback.
     reply = dict(content=content, entity=dict(type='Ticket', id=ticket_id))
