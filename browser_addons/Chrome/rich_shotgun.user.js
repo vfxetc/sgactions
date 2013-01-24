@@ -25,26 +25,51 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
             
             // Parse and set the data.
             for (var i = 0; i < this.items.length; i++) {
-                if (this.items[i].url && /^sgaction/.test(this.items[i].url)) {
+
+                if (this.items[i].url) {
                     
                     var item = this.items[i];
                     
-                    // Parse the rich data.
-                    var rich = {};
-                    var m = /^(.+?)\/(.+?)$/.exec(item.url);
-                    if (m) {
-                        item.url = m[1]
-                        var pairs = m[2].split('&');
-                        for (var j = 0; j < pairs.length; j++) {
-                            var pair = pairs[j].split('=');
-                            rich[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+                    // Old method: sgactions have rich data as the last
+                    // path segment.
+                    if (/^sgaction/.test(this.items[i].url)) {
+
+                        // Parse the rich data.
+                        var rich = {};
+                        var m = /^(.+?)\/(.+?)$/.exec(item.url);
+                        if (m) {
+                            item.url = m[1]
+                            var pairs = m[2].split('&');
+                            for (var j = 0; j < pairs.length; j++) {
+                                var pair = pairs[j].split('=');
+                                rich[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+                            }
                         }
+                        
+                        item.html = rich.t || item.html;
+                        item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
+                        item.heading = rich.h;
+
                     }
-                    
-                    item.html = rich.t || item.html;
-                    item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
-                    item.heading = rich.h;
+
+                    // New method: Rich data in the title itself, e.g.:
+                    // "Heading / Title [icon]"
+
+                    // Heading befor a slash.
+                    var m = /^\s*(.+?)\s*\/\s*(.+?)\s*$/.exec(item.html || '');
+                    if (m) {
+                        item.heading = m[1];
+                        item.html = m[2];
+                    }
+
+                    // Icon in square-brackets at end.
+                    m = /^(.+?)\s*\[(.+?)\]$/.exec(item.html || '');
+                    if (m) {
+                        item.html = m[1];
+                        item.icon_name = 'silk-icon silk-icon-' + m[2];
+                    }
                 }
+
             }
             
             // Collapse headings and lines.

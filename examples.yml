@@ -17,7 +17,7 @@
     list_order: 92
 -
     url: http://keyweb/post.php
-    title: "Development / Show POST"
+    title: "Development / Show Post [bug]"
     list_order: 93
 -
     entrypoint: sgactions.examples:raise_error
