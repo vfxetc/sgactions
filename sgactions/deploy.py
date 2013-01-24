@@ -22,14 +22,19 @@ def main():
     
     # Find and collapse existing.
     existing = {}
-    individuals = sg.find('ActionMenuItem', [('url', 'starts_with', 'sgaction:')], FIELD_NAMES)
+    individuals = sg.find('ActionMenuItem', [], FIELD_NAMES)
     for menu_item in individuals:
-        existing.setdefault(menu_item['url'].split('/')[0], []).append(menu_item)
+        if menu_item['url'].startswith('sgaction:'):
+            key = menu_item['url'].split('/')[0]
+
+        else:
+            key = menu_item['url']
+        existing.setdefault(key, []).append(menu_item)
     
     # List the existing menu items.
     if opts.list:
-        for menu_items in sorted(existing.itervalues(), key=lambda x: (x[0]['list_order'], x[0]['title'])):
-            print menu_items[0]['url'].split('/')[0]
+        for key, menu_items in sorted(existing.iteritems(), key=lambda (k, mi): (mi[0]['list_order'], mi[0]['title'])):
+            print key
             print '\ttitle: %s' % menu_items[0]['title']
             print '\tlist_order: %s' % menu_items[0]['list_order']
             print '\tentity_types:', ', '.join(str(x['entity_type']) for x in menu_items)
@@ -75,24 +80,52 @@ def main():
     # Get the new ones.
     for path in args:
         for menu_item in yaml.load(open(path).read()):
-            if menu_item['entrypoint'] in specs:
-                print 'WARNING: collision on', menu_item['entrypoint']
-            specs[menu_item['entrypoint']] = menu_item
-            menu_item.setdefault('title', menu_item['entrypoint'])
+
+            if 'entrypoint' in menu_item:
+                key = menu_item['entrypoint']
+                menu_item['is_sgaction'] = True
+            else:
+                key = menu_item.get('url')
+                menu_item['is_sgaction'] = False
+
+            if not key:
+                print 'missing entrypoint and url'
+                continue
+
+            if key in specs:
+                print 'WARNING: collision on', key
+            specs[key] = menu_item
+            menu_item.setdefault('title', key)
             menu_item.setdefault('list_order', None)
             menu_item.setdefault('selection_required', False)
             menu_item.setdefault('entity_types', [None])
             menu_item.setdefault('rich', {})
     
     # Create/Update.
-    for entrypoint, spec in sorted(specs.iteritems()):
-        url = url_base = 'sgaction:' + entrypoint
-        rich = {}
-        for k, v in spec['rich'].iteritems():
-            rich[k[0]] = str(v)
+    for url_or_entrypoint, spec in sorted(specs.iteritems()):
+
+        if spec['is_sgaction']:
+            url = url_base = 'sgaction:' + url_or_entrypoint
+        else:
+            url = url_base = url_or_entrypoint
+
+        rich = spec.pop('rich')
         if rich:
-            url += '/' + '&'.join('%s=%s' % (k, urllib.quote(v)) for k, v in rich.iteritems())
-            
+
+            # Old method; leave until everyone has Chrome extension supporting
+            # the new method.
+            if spec['is_sgaction']:
+                rich = dict((k[0], str(v)) for k, v in rich.iteritems())
+                url += '/' + '&'.join('%s=%s' % (k, urllib.quote(v)) for k, v in rich.iteritems())
+
+            # New method: "heading / title [icon]"
+            else:
+                title = rich.pop('title', None) or spec['title']
+                if rich.get('heading'):
+                    title = '%s / %s' % rich.pop('heading')
+                if rich.get('icon'):
+                    title = '%s [%s]' % rich.pop('icon')
+
         for entity_type in spec['entity_types']:
             
             # Get the new data.
@@ -109,7 +142,7 @@ def main():
                         
             # Create.
             if not old_data:
-                print 'Create %s / %s' % (entrypoint, entity_type)
+                print 'Create %s / %s' % (url_or_entrypoint, entity_type)
                 if not opts.dry_run:
                     sg.create('ActionMenuItem', new_data)
             
@@ -118,11 +151,11 @@ def main():
                 id_ = old_data.pop('id')
                 del old_data['type']
                 if new_data != old_data:
-                    print 'Update %s / %s' % (entrypoint, entity_type)
+                    print 'Update %s / %s' % (url_or_entrypoint, entity_type)
                     if not opts.dry_run:
                         sg.update('ActionMenuItem', id_, new_data)
                 else:
-                    print 'Ignore %s / %s' % (entrypoint, entity_type)
+                    print 'Ignore %s / %s' % (url_or_entrypoint, entity_type)
 
 
 if __name__ == '__main__':

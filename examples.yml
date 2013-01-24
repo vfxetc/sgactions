@@ -16,10 +16,14 @@
         icon: bug
     list_order: 92
 -
+    url: http://keyweb/post.php
+    title: "Development / Show POST"
+    list_order: 93
+-
     entrypoint: sgactions.examples:raise_error
     title: "Development: Raise Error"
     rich:
         heading: Development
         title: Raise Error
         icon: bug
-    list_order: 93
+    list_order: 94
