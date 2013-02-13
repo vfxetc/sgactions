@@ -127,7 +127,7 @@ def main():
         call(['mkdir', '-p', dst])
         call(['rsync', '-ax', '--delete', src + '/', dst + '/'])
         
-    if platform.system() == 'Darwin':
+    if sys.platform.startswith("darwin"):
         print 'Refreshing services...'
         call(['/System/Library/CoreServices/pbs', '-flush'])
     
