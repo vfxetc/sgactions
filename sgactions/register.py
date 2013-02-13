@@ -2,7 +2,7 @@
 
 from subprocess import call, Popen, PIPE
 import os
-import platform
+import sys
 import re
 import json
 import hashlib
@@ -71,7 +71,7 @@ def install_chrome_extension(path):
     
 def main():
     
-    if platform.system() == 'Darwin':
+    if sys.platform.startswith('darwin'):
         
         lsregister = '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister'
         handler = os.path.abspath(os.path.join(__file__, '..', '..', 'Shotgun Action Dispatcher.app'))
@@ -93,14 +93,14 @@ def main():
         
         print 'Done.'
     
-    elif platform.system() == 'Linux':
+    elif sys.platform.startswith('linux'):
         # All of the logic is in a shell script.
         call([
             os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
         ])
     
     else:
-        print 'Cannot install protocol handlers on %s' % platform.system()
+        print 'Cannot install protocol handlers on %s' % sys.platform
         
 
     print 'Installing Chrome extension...'

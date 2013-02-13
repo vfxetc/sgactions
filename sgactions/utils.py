@@ -1,5 +1,5 @@
 from subprocess import call
-import platform
+import sys
 
 
 def notify(message, title=None, sticky=False):
@@ -13,7 +13,7 @@ def notify(message, title=None, sticky=False):
     print message
     print '---'
     
-    if platform.system() == 'Darwin':
+    if sys.platform.startswith('darwin'):
         argv = ['growlnotify',
             '--name', 'Shotgun Action Dispatcher',
             '--title', title,

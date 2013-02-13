@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import contextlib
 import os
-import platform
 import subprocess
 import sys
 import tempfile
@@ -85,7 +84,7 @@ class Dialog(QtGui.QDialog):
     def _on_screenshot(self, *args):
         self.hide()
         path = tempfile.NamedTemporaryFile(suffix=".png", prefix="tanktmp", delete=False).name
-        if platform.system() == "Darwin":
+        if sys.platform.startswith('darwin'):
             # use built-in screenshot command on the mac
             proc = subprocess.Popen(['screencapture', '-mis', path])
         else:
