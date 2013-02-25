@@ -165,10 +165,14 @@ def ticket_current_exception(dialog_class=None):
 
 
 @contextlib.contextmanager
-def ticket_ui_context(reraise=True, dialog_class=None):
+def ticket_ui_context(reraise=True, pass_through=None, dialog_class=None):
     try:
         yield
-    except:
+    except Exception as e:
+
+        if pass_through and isinstance(e, pass_through):
+            raise
+
         not_ignored = ticket_current_exception(dialog_class=dialog_class)
         if reraise or (reraise is None and not not_ignored):
             raise
