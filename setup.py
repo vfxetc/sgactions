@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='sgactions',
-    version='0.1-dev',
+    version='1.0.0',
     description='Shotgun ActionMenuItem enrichment.',
     url='http://github.com/westernx/sgactions',
     
@@ -12,6 +12,10 @@ setup(
     author_email='sgactions@mikeboers.com',
     license='BSD-3',
     
+    install_requires='''
+        pyyaml
+    ''',
+
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

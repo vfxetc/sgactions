@@ -11,6 +11,28 @@ This Python package is a wrapper around ``ActionMenuItems`` in `Shotgun <http://
 Installation
 ------------
 
+Shotgun API Keys
+^^^^^^^^^^^^^^^^
+
+There are two ways to provide Shotgun API keys to the dispatcher: environment
+variables or a ``shotgun_api3_registry.connect()`` function.
+
+For the first, set ``SHOTGUN_SERVER``, ``SHOTGUN_SCRIPT_NAME``, and
+``SHOTGUN_SCRIPT_KEY`` in your execution environment.
+
+For the second, create a ``shotgun_api3_registry`` module with a ``connect``
+function that returns a ``shotgun_api3.Shotgun`` instance.
+
+
+Python
+^^^^^^
+
+The ``agaction`` package must be importable from the environment that your browser runs in. Check ``~/.xsession-errors`` on Linux or the Console.app on OS X if your commands seems to be vanishing into a black hole.
+
+
+Protocol Handlers and Chrome Extensions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Shotgun action menu items allow for execution of your code in two ways: via a ``POST`` to another webserver under your control, or navigating to an arbitrary URI. We hook into the second method via protocol handers on OS X and Linux by responding to the ``sgaction`` protocol. We have unified both cases into a single script::
 
     python -m sgactions.register
@@ -47,7 +69,16 @@ We can specify the rest of the standard ``ActionMenuItem`` fields in a similar w
       list_order: 1
       selection_required: true
       
-Rich fields are added seperately to give you the oppourtunity to specify a different title for those browsers which will not render them richly. For example, one of the actions from the screenshot above are specified via::
+A special title syntax will also be interpreted by the browser plugin in order to
+create headings and icons. For example, one of the actions from the screenshot above are specified via::
+
+    - entrypoint: sgfs.commands.launch_maya:sgaction
+      title: "Toolbox / Launch Maya [application-osx-terminal]"
+      list_order: 11
+      entity_types: [Task]
+      selection_required: true
+
+These rich fields may be added seperately to give you the oppourtunity to specify a different title for those browsers which will not render them richly. ::
 
     - entrypoint: sgfs.commands.launch_maya:sgaction
       title: "Toolbox: Launch Maya"

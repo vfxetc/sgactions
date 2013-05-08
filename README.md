@@ -5,3 +5,5 @@ This Python package is a wrapper around `ActionMenuItems` in [Shotgun](http://ww
 ![Icons and headings](https://raw.github.com/westernx/sgactions/master/docs/_static/icons-screenshot.png)
 
 [Read the docs](http://sgactions.readthedocs.org/), and good luck!
+
+This project uses [semantic versioning](http://semver.org/).

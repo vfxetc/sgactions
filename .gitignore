@@ -2,6 +2,7 @@
 *.pyc
 .DS_Store
 ._*
+*.egg-info
 
 # Makefile sentinels.
 *.make-sentinel

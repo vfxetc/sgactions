@@ -1,6 +1,4 @@
 
-- Stub for people without shotgun_api3_registry.
-
 - Logging via `logging` instead of via stdout.
 
 - sgactions rich ACL
