@@ -5,14 +5,13 @@ import re
 import types
 import textwrap
 
+from .utils import get_shotgun
+
 
 def guess_user_id():
     login = os.getlogin()
-
-    import shotgun_api3_registry
-    shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch')
-    
-    human = shotgun.find_one('HumanUser', [('email', 'starts_with', login + '@')])
+    sg = get_shotgun()
+    human = sg.find_one('HumanUser', [('email', 'starts_with', login + '@')])
     return human and human['id']
 
 
@@ -54,8 +53,7 @@ def get_ticket_for_exception(exc_type=None, exc_value=None, exc_traceback=None, 
         
     # Get the Shotgun and Project.
     # TODO: Somehow pass this in later.
-    import shotgun_api3_registry
-    shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch')
+    shotgun = get_shotgun()
     project = dict(type='Project', id=74)
     
     # Look for an existing ticket, or create a new one.
@@ -158,8 +156,7 @@ def reply_to_ticket(ticket_id, content, user_id=None):
     
     # Get the Shotgun and Project.
     # TODO: Somehow pass this in later.
-    import shotgun_api3_registry
-    shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch')
+    shotgun = get_shotgun()
     
     created = shotgun.create('Reply', reply)
     return created['id'], content
@@ -167,6 +164,5 @@ def reply_to_ticket(ticket_id, content, user_id=None):
 
 def attach_to_ticket(ticket_id, attachment):
     """Attach a file to a ticket."""
-    import shotgun_api3_registry
-    shotgun = shotgun_api3_registry.connect(name='sgactions.dispatch')
+    shotgun = get_shotgun()
     shotgun.upload('Ticket', ticket_id, attachment, 'attachments')

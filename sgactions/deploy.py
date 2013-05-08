@@ -4,7 +4,7 @@ import urllib
 
 import yaml
     
-from shotgun_api3_registry import connect
+from .utils import get_shotgun
 
 
 FIELD_NAMES = ('id', 'title', 'list_order', 'entity_type', 'selection_required', 'url')
@@ -18,7 +18,7 @@ def main():
     optparser.add_option('-d', '--delete', action="store_true", dest="delete")    
     opts, args = optparser.parse_args()
     
-    sg = connect()
+    sg = get_shotgun()
     
     # Find and collapse existing.
     existing = {}
