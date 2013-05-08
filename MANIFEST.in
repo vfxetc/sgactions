@@ -1,0 +1,6 @@
+recursive-include *.app *
+recursive-include art
+recursive-include browser_addons *
+recursive-include LaunchAgents *
+recursive-include Services *
+include examples.yml

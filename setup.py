@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='sgactions',
-    version='1.0.0',
+    version='1.0.1',
     description='Shotgun ActionMenuItem enrichment.',
     url='http://github.com/westernx/sgactions',
     
