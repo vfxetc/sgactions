@@ -16,7 +16,7 @@
         icon: bug
     list_order: 92
 -
-    url: http://keyweb/post.php
+    url: http://httpbin.org/
     title: "Development / Show Post [bug]"
     list_order: 93
 -
