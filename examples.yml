@@ -1,29 +1,17 @@
 -
     entrypoint: sgactions.examples:dump_environ
-    title: "Development: Show Environment"
-    rich:
-        heading: Development
-        title: Show Environment
-        icon: bug
+    title: "Development / Show Environment [bug]"
     list_order: 91
 
 -
     entrypoint: sgactions.examples:dump_kwargs
-    title: "Development: Show Kwargs"
-    rich:
-        heading: Development
-        title: Show Kwargs
-        icon: bug
+    title: "Development / Show Kwargs [bug]"
     list_order: 92
 -
-    url: http://httpbin.org/
+    url: http://httpbin.org/post
     title: "Development / Show Post [bug]"
     list_order: 93
 -
     entrypoint: sgactions.examples:raise_error
-    title: "Development: Raise Error"
-    rich:
-        heading: Development
-        title: Raise Error
-        icon: bug
+    title: "Development / Raise Error [bug]"
     list_order: 94
