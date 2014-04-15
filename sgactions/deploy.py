@@ -7,7 +7,7 @@ import yaml
 from .utils import get_shotgun
 
 
-FIELD_NAMES = ('id', 'title', 'list_order', 'entity_type', 'selection_required', 'url')
+FIELD_NAMES = ('id', 'title', 'list_order', 'entity_type', 'selection_required', 'url', 'folder')
 
 
 def main():
@@ -96,6 +96,7 @@ def main():
                 print 'WARNING: collision on', key
             specs[key] = menu_item
             menu_item.setdefault('title', key)
+            menu_item.setdefault('folder', None)
             menu_item.setdefault('list_order', None)
             menu_item.setdefault('selection_required', False)
             menu_item.setdefault('entity_types', [None])
