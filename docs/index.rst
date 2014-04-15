@@ -64,33 +64,27 @@ This will register "Run my action!" on every Shotgun entity to call ``run_sgacti
 We can specify the rest of the standard ``ActionMenuItem`` fields in a similar way::
 
     - entrypoint: my.python.package:run_sgaction
+      folder: My Actions
       title: Run my action on Shots or Tasks!
       entity_types: [Shot, Task]
       list_order: 1
       selection_required: true
       
-A special title syntax will also be interpreted by the browser plugin in order to
-create headings and icons. For example, one of the actions from the screenshot above are specified via::
+A special syntax will also be interpreted by the browser plugin in order to create
+headings and icons in titles and folders. This syntax is::
+
+    Header / Title [icon]
+
+For example, one of the actions from the screenshot above are specified via::
 
     - entrypoint: sgfs.commands.launch_maya:sgaction
-      title: "Toolbox / Launch Maya [application-osx-terminal]"
+      title: "Header / Launch Maya [application-osx-terminal]"
+      folder: "Toolbox [cog]"
       list_order: 11
       entity_types: [Task]
       selection_required: true
 
-These rich fields may be added seperately to give you the oppourtunity to specify a different title for those browsers which will not render them richly. ::
-
-    - entrypoint: sgfs.commands.launch_maya:sgaction
-      title: "Toolbox: Launch Maya"
-      rich:
-          heading: Toolbox
-          title: Launch Maya
-          icon: application-osx-terminal
-      list_order: 11
-      entity_types: [Task]
-      selection_required: true
-
-We currently support the `Silk icon set <http://www.famfamfam.com/lab/icons/silk/>`_; simply replace underscores with dashes.
+We currently support the `Silk icon set <http://www.famfamfam.com/lab/icons/silk/>`_; simply replace underscores with dashes in the icon names.
 
 
 Deployment
