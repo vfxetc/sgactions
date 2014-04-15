@@ -7,13 +7,21 @@ function inject_node(node) {
     (document.head || document.body || document.documentElement).appendChild(node);
 }
 
-var link = document.createElement("link");
-link.setAttribute("rel", "stylesheet");
-link.setAttribute("type", "text/css");
-link.setAttribute("href", chrome.extension.getURL("silk/silk-icons.css"));
-inject_node(link);
+function inject_css(url) {
+    var link = document.createElement("link");
+    link.setAttribute("rel", "stylesheet");
+    link.setAttribute("type", "text/css");
+    link.setAttribute("href", url);
+    inject_node(link);
+}
 
-var script = document.createElement("script");
-script.type = "text/javascript";
-script.src = chrome.extension.getURL("rich_shotgun_actions.js");
-inject_node(script);
+function inject_js(url) {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = url
+    inject_node(script);
+}
+
+inject_css(chrome.extension.getURL("silk/silk-icons.css"));
+inject_css(chrome.extension.getURL("rich_shotgun_actions.css"));
+inject_js(chrome.extension.getURL("rich_shotgun_actions.js"));

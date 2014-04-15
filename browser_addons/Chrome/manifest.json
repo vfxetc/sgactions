@@ -13,6 +13,7 @@
 
     "web_accessible_resources": [
         "rich_shotgun_actions.js",
+        "rich_shotgun_actions.css",
         "silk/silk-icons.css",
         "silk/silk-icons.png",
         "silk/silk-icons.gif"
