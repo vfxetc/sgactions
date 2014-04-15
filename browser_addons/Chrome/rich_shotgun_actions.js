@@ -16,13 +16,15 @@ window.Ext.override(window.SG.Menu, {
             // Parse and set the data.
             for (var i = 0; i < this.items.length; i++) {
 
-                if (this.items[i].url) {
-                    
-                    var item = this.items[i];
+                var item = this.items[i];
+
+                // The undefined check is our tenuous hold on folders
+                // that are created for ActionMenuItems.
+                if (item.url || item.heading === undefined) {
                     
                     // Old method: sgactions have rich data as the last
                     // path segment.
-                    if (/^sgaction/.test(this.items[i].url)) {
+                    if (/^sgaction/.test(item.url || '')) {
 
                         // Parse the rich data.
                         var rich = {};
