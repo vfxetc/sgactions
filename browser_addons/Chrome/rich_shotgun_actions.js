@@ -14,10 +14,8 @@ window.Ext.override(window.SG.Menu, {
 
                 // The undefined check is our tenuous hold on folders
                 // that are created for ActionMenuItems.
-                if (item.url || item.heading === undefined) {
-                    
-                    // Old method: sgactions have rich data as the last
-                    // path segment.
+                if (item.url || (item.order !== undefined && item.disabled === undefined)) {
+
                     if (/^sgaction/.test(item.url || '')) {
 
                         // Parse the rich data.
@@ -40,9 +38,7 @@ window.Ext.override(window.SG.Menu, {
 
                     // New method: Rich data in the title itself, e.g.:
                     // "Heading / Title [icon]"
-
-                    // Heading befor a slash.
-                    var m = /^\s*(.+?)\s*\/\s*(.+?)\s*$/.exec(item.html || '');
+                    var m = /^\s*(.+?)\s+\/\s+(.+?)\s*$/.exec(item.html || '');
                     if (m) {
                         item.heading = m[1];
                         item.html = m[2];
