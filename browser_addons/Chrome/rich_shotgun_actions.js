@@ -1,9 +1,3 @@
-var link = document.createElement("link");
-link.setAttribute("rel", "stylesheet");
-link.setAttribute("type", "text/css");
-link.setAttribute("href", 'https://silk-icons-css.googlecode.com/hg/silk-icons.css');
-document.getElementsByTagName('head')[0].appendChild(link);   
-
 console.log('Starting SGActions: rich ActionMenuItems')
 
 var original = window.SG.Menu.prototype.render_menu_items;
