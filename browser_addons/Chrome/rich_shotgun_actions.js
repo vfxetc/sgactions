@@ -4,21 +4,11 @@ link.setAttribute("type", "text/css");
 link.setAttribute("href", 'https://silk-icons-css.googlecode.com/hg/silk-icons.css');
 document.getElementsByTagName('head')[0].appendChild(link);   
 
-
-// Define unsafeWindow in browsers where it doesn't exist.
-window.unsafeWindow || (
-    unsafeWindow = (function() {
-        var el = document.createElement('p');
-        el.setAttribute('onclick', 'return window;');
-        return el.onclick();
-    }())
-);
-
 console.log('Starting SGActions: rich ActionMenuItems')
 
-var original = unsafeWindow.SG.Menu.prototype.render_menu_items;
+var original = window.SG.Menu.prototype.render_menu_items;
 
-unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
+window.Ext.override(window.SG.Menu, {
     render_menu_items: function() {
         
         try {
@@ -49,7 +39,7 @@ unsafeWindow.Ext.override(unsafeWindow.SG.Menu, {
                         item.html = rich.t || item.html;
                         item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
                         item.heading = rich.h;
-
+                        
                     }
 
                     // New method: Rich data in the title itself, e.g.:

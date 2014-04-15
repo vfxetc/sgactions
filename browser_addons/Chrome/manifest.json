@@ -7,8 +7,12 @@
     
     "content_scripts": [{
         "matches": ["https://*.shotgunstudio.com/*"],
-        "js": ["rich_shotgun.user.js"],
+        "js": ["escape_sandbox.js"],
         "run_at": "document_idle"
-    }]
+    }],
+
+    "web_accessible_resources": [
+        "rich_shotgun_actions.js"
+    ]
     
 }
