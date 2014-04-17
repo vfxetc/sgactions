@@ -113,13 +113,12 @@ def main():
         rich = spec.pop('rich')
         if rich:
 
-            # Old method; leave until everyone has Chrome extension supporting
-            # the new method.
+            # Stuff the rich specs into the URL.
             if spec['is_sgaction']:
                 rich = dict((k[0], str(v)) for k, v in rich.iteritems())
                 url += '/' + '&'.join('%s=%s' % (k, urllib.quote(v)) for k, v in rich.iteritems())
 
-            # New method: "heading / title [icon]"
+            # URLs need to use the formatting method.
             else:
                 title = rich.pop('title', None) or spec['title']
                 if rich.get('heading'):

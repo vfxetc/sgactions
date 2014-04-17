@@ -78,11 +78,28 @@ headings and icons in titles and folders. This syntax is::
 For example, one of the actions from the screenshot above are specified via::
 
     - entrypoint: sgfs.commands.launch_maya:sgaction
-      title: "Header / Launch Maya [application-osx-terminal]"
+      title: "3D Department / Launch Maya [application-osx-terminal]"
       folder: "Toolbox [cog]"
       list_order: 11
       entity_types: [Task]
       selection_required: true
+
+For even more graceful degradation, you can give a "rich" title, heading, and icon
+that should be used, while falling back onto the original title if the browser
+extension fails::
+
+    - entrypoint: sgfs.commands.launch_maya:sgaction
+      title: "Launch Maya"
+      folder: "Toolbox [cog]"
+      rich:
+        title: Launch Maya
+        header: 3D Department
+        icon: application-osx-terminal
+      list_order: 11
+      entity_types: [Task]
+      selection_required: true
+
+This does not work for URL-based ActionMenuItems.
 
 We currently support the `Silk icon set <http://www.famfamfam.com/lab/icons/silk/>`_; simply replace underscores with dashes in the icon names.
 
