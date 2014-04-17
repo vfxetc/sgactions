@@ -1,17 +1,21 @@
 -
     entrypoint: sgactions.examples:dump_environ
-    title: "Development / Show Environment [bug]"
+    folder: Development / Inspect Context [zoom]
+    title: "Show Environment [zoom]"
     list_order: 91
 
 -
     entrypoint: sgactions.examples:dump_kwargs
-    title: "Development / Show Kwargs [bug]"
+    folder: Development / Inspect Context [zoom]
+    title: "Show Kwargs [zoom]"
     list_order: 92
 -
-    url: http://httpbin.org/post
-    title: "Development / Show Post [bug]"
+    url: http://httpbin.org/post?one=1&two=2
+    folder: Development / Inspect Context [zoom]
+    title: "Show POST [zoom]"
     list_order: 93
 -
     entrypoint: sgactions.examples:raise_error
-    title: "Development / Raise Error [bug]"
+    folder: Development / Testing [cog]
+    title: "Raise Error [bug]"
     list_order: 94
