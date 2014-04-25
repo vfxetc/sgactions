@@ -23,10 +23,7 @@ window.Ext.override(window.SG.Menu, {
                         var m = /^(.+?)\/(.+?)$/.exec(item.url);
                         if (m) {
                             item.url = m[1]
-                            // Shotgun has started escaping things, so we need
-                            // to split by the HTML entity. Hopefully, they
-                            // partially revert this behaviour.
-                            var pairs = m[2].split(/&(amp;)?/);
+                            var pairs = m[2].split('&');
                             for (var j = 0; j < pairs.length; j++) {
                                 var pair = pairs[j].split('=');
                                 rich[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
