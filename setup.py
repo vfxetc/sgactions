@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='sgactions',
@@ -6,7 +6,7 @@ setup(
     description='Shotgun ActionMenuItem enrichment.',
     url='http://github.com/westernx/sgactions',
     
-    packages=['sgactions'],
+    packages=find_packages(exclude=['build*', 'tests*']),
     
     author='Mike Boers',
     author_email='sgactions@mikeboers.com',
