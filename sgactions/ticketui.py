@@ -6,8 +6,7 @@ import subprocess
 import sys
 import tempfile
 
-from PyQt4 import QtCore, QtGui
-Qt = QtCore.Qt
+from uitools.qt import Qt, QtCore, QtGui
 
 from . import tickets
 
