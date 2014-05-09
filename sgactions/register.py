@@ -30,7 +30,7 @@ def install_chrome_extension(path):
     
     changed = False
     
-    ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browser_addons', 'Chrome'))
+    ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
     ext_id = google_hash(ext_path)
     
     # Remove all old extensions.
@@ -74,7 +74,7 @@ def main():
     if sys.platform.startswith('darwin'):
         
         lsregister = '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister'
-        handler = os.path.abspath(os.path.join(__file__, '..', '..', 'Shotgun Action Dispatcher.app'))
+        handler = os.path.abspath(os.path.join(__file__, '..', 'platforms', 'darwin', 'Shotgun Action Dispatcher.app'))
         
         print 'Cleaning old handlers...'
         proc = Popen([lsregister, '-dump'], stdout=PIPE, stderr=PIPE)
@@ -111,7 +111,7 @@ def main():
     
     print 'Installing OS X Services...'
     
-    our_services = os.path.join(sgactions_root, 'Services')
+    our_services = os.path.join(sgactions_root, 'sgactions', 'platforms', 'darwin', 'Services')
     system_services = os.path.expanduser(os.path.join('~', 'Library', 'Services'))
     for service_name in os.listdir(our_services):
         if service_name.startswith('.'):
