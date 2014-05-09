@@ -79,7 +79,7 @@ def main():
         print 'Cleaning old handlers...'
         proc = Popen([lsregister, '-dump'], stdout=PIPE, stderr=PIPE)
         for line in proc.stdout:
-            m = re.match(r'\s*path:\s*(.+?/sgactions/.+?\.app)\s*$', line)
+            m = re.match(r'\s*path:\s*(.+?/sgactions/.+?\.app)/?\s*$', line)
             if m and m.group(1) != handler:
                 print '\t' + m.group(1)
                 call([lsregister, '-u', m.group(1)], stdout=PIPE, stderr=PIPE)
