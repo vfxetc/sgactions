@@ -1,6 +1,8 @@
 import os
+import re
 import sys
-from subprocess import call
+import tempfile
+from subprocess import call, check_call, CalledProcessError
 
 import shotgun_api3
 
@@ -17,6 +19,22 @@ def notify(message, title=None, sticky=False):
     print '---'
     
     if sys.platform.startswith('darwin'):
+
+        fd, message_path = tempfile.mkstemp('.txt', 'sgactions.' + re.sub(r'\W+', '-', title) + '.')
+        os.write(fd, message)
+        os.close(fd)
+
+        argv = ['terminal-notifier',
+            '-title', title,
+            '-message', message,
+            '-open', 'file://' + message_path,
+        ]
+        try:
+            check_call(argv)
+            return
+        except CalledProcessError:
+            pass
+
         argv = ['growlnotify',
             '--name', 'Shotgun Action Dispatcher',
             '--title', title,
@@ -24,12 +42,14 @@ def notify(message, title=None, sticky=False):
         ]
         if sticky:
             argv.append('-s')
+        call(argv)
+
     else:
         argv = ['notify-send']
         if sticky:
             argv.extend(['-t', '3600000'])
         argv.extend([title, message])
-    call(argv)
+        call(argv)
 
 
 def get_shotgun(*args, **kwargs):
