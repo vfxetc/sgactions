@@ -1,2 +1,3 @@
 recursive-include sgactions/browsers *
 recursive-include sgactions/platforms *
+recursive-include sgactions *.sh
