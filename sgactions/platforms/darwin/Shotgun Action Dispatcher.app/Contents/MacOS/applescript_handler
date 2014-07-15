@@ -3,9 +3,18 @@
 import os
 import sys
 import tempfile
+import time
 
-# Perform sys.argv emulation.
+# Dump stdout/err into a tempfile so we can actually get to them.
+fd, path = tempfile.mkstemp(dir='/var/tmp', suffix='.txt', prefix='sgactions.%d.' % time.time())
+os.dup2(fd, 1)
+os.dup2(fd, 2)
+
+
+# Perform sys.argv emulation. We just assume we are always running from
+# LaunchServices.
 sys.path.append(os.path.dirname(__file__))
+os.environ['_PY2APP_LAUNCHED_'] = '1'
 import argv_emulation
 
 
