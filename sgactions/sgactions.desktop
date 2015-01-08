@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=SG Actions
+Comment=Launches SG Actions
+Exec=python -m sgactions.dispatch %u
+Terminal=false
+Type=Application
+NoDisplay=true
+MimeType=x-scheme-handler/sgaction;
+Name[en_CA]=sgactions
