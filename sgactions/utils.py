@@ -32,7 +32,7 @@ def notify(message, title=None, sticky=False):
         try:
             check_call(argv)
             return
-        except CalledProcessError:
+        except:
             pass
 
         argv = ['growlnotify',
