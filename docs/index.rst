@@ -151,5 +151,4 @@ Of particular interest is ``project_id``, which will appear in most cases and so
 Debugging
 ---------
 
-Standard output is dumped to ``/var/log/system.log`` on OS X (accessible via ``Console.app``), and ``~/.xsession-errors`` on Linux.
-
+Standard output and error are dumped to a file in ``/var/tmp`` that starts with ``sgactions``.
