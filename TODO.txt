@@ -1,4 +1,6 @@
 
+- Use native OS X APIs for notifications (if we are in an app bundle... which we are most of the time).
+
 - Logging via `logging` instead of via stdout.
 
 - sgactions rich ACL

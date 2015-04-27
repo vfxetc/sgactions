@@ -32,9 +32,20 @@ def notify(message, title=None, sticky=False):
         try:
             check_call(argv)
             return
-        except:
-            pass
+        except Exception as e:
+            print e
 
+        # AppleScript works since 10.9.
+        argv = ['osascript', '-e', 'display notification "%s" with title "%s"' % (
+            message.replace('"', '\\"'),
+            title.replace('"', '\\"'),
+        )]
+        try:
+            check_call(argv)
+            return
+        except Exception as e:
+            print e
+        
         argv = ['growlnotify',
             '--name', 'Shotgun Action Dispatcher',
             '--title', title,
@@ -69,4 +80,8 @@ def get_shotgun(*args, **kwargs):
         raise RuntimeError("Set $SHOTGUN_API3_ARGS or provide shotgun_api3_registry.connect()")
     else:
         return shotgun_api3_registry.connect(*args, **kwargs)
+
+
+if __name__ == '__main__':
+    notify('Test message', 'Test')
 
