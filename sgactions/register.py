@@ -31,15 +31,16 @@ def install_chrome_extension(path):
     changed = False
     
     ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
+    ext_rel_path = os.path.relpath(ext_path, os.path.abspath(os.path.join(__file__, '..', '..')))
     ext_id = google_hash(ext_path)
     
     # Remove all old extensions.
     for k, v in prefs['extensions']['settings'].items():
-        if '/sgactions/browser_addons/Chrome' in v.get('path', ''):
+        if ext_rel_path in v.get('path', ''):
             if k == ext_id:
                 print '\t\tAlready installed'
             else:
-                print '\t\tRemoving', v['path']
+                print '\t\tRemoving other:', v['path']
                 del prefs['extensions']['settings'][k]
                 changed = True
     
