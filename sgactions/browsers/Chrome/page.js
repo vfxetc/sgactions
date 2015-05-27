@@ -1,4 +1,4 @@
-if (window._sgactions_loaded != undefined) {
+if (window.SGActions != undefined) {
     console.log('SGActions already loaded; are there more than one?')
 
 } else if (window.SG == undefined) {
@@ -6,14 +6,82 @@ if (window._sgactions_loaded != undefined) {
 
 } else {
 
-    window._sgactions_loaded = true;
-    console.log('Starting SGActions: rich ActionMenuItems')
+    SGActions = {
+        nativeCapabilities: []
+    }
+
+    console.log('[SGActions] loaded')
+
+    window.addEventListener("message", function(e) {
+        if (e.source != window) return; // Must be from this page.
+        if (!e.data.sgactions) return; // Must be sgactions.
+        if (e.data.sgactions.dst != 'page') return; // Must be sent to us.
+
+        var msg = e.data.sgactions;
+
+        switch(msg.type) {
+            case 'hello':
+                console.log('[SGActions] native capabilities:', msg.capabilities);
+                SGActions.nativeCapabilities = msg.capabilities;
+                break;
+            default:
+                console.log('unknown message:', msg);
+        }
+    })
+
+    window.postMessage({sgactions: {
+        src: 'page',
+        dst: 'native',
+        type: 'hello'
+    }}, '*')
+
+
 
     var original = window.SG.Menu.prototype.render_menu_items;
 
     window.Ext.override(window.SG.Menu, {
         render_menu_items: function() {
             
+            // console.trace();
+            console.log(this);
+
+            // this.parent is often EntityQueryPage
+            // console.log(this.parent.get_content_widget_entity_type());
+            // console.log(this.parent);
+            // console.log(this.parent.selected_entities)
+
+            var parent = this.parent;
+            var content_widget = parent.get_content_widget();
+            var entity_set = content_widget.get_entity_data_store();
+            var selected_entities = parent.selected_entities;
+            var entity_type = parent.get_content_widget_entity_type();
+            var schema_fields = SG.schema.entity_fields[entity_type];
+
+            // console.log(entity_set); // this is "owner"
+
+            for (var i = 0; i < selected_entities.length; i++) {
+                rec = entity_set.get_record_by_id(selected_entities[i]);
+                // rec.owner.grouping[group_col_i].column describes group names
+                // rec.owner.groups_with_idx[group_i].display_values is the display string of the grouped columns
+                // rec.owner.groups_with_idx[group_i].template_values is the value of the grouped columns
+                // rec.owner.groups_with_idx[group_i].ids is the ids of the entities contained
+                console.log(rec);
+            }
+
+            this.items.push({
+                disabled: false,
+                heading: null,
+                html: "Testing Injected",
+                icon_name: "icon_edit",
+                item_selected: { // Callback for when selected.
+                    fn: function() {
+                        console.log('here, in', this)
+                    },
+                    scope: this // `this` in the function
+                }
+            })
+
+
             try {
                 
                 // Parse and set the data.

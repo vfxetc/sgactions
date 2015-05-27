@@ -5,18 +5,26 @@
     "description": "Control Shotgun's action menu item icons and headings.",
     "version": "0.1",
     
+    "background": {
+        "scripts": ["background.js"]
+    },
+
     "content_scripts": [{
         "matches": ["https://*.shotgunstudio.com/*"],
-        "js": ["escape_sandbox.js"],
+        "js": ["main.js"],
         "run_at": "document_idle"
     }],
 
     "web_accessible_resources": [
-        "rich_shotgun_actions.js",
-        "rich_shotgun_actions.css",
+        "page.js",
+        "page.css",
         "silk/silk-icons.css",
         "silk/silk-icons.png",
         "silk/silk-icons.gif"
+    ],
+
+    "permissions": [
+        "nativeMessaging"
     ]
     
 }
