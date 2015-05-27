@@ -3,3 +3,12 @@
     max-width: 16px !important;
     margin: 0 0 0 -1px;
 }
+
+.sg_menu_item.sgactions-filter-passfail {
+    font-style: italic;
+}
+
+.sg_menu_item.sgactions-filter-passfail .sgactions-filter-count {
+    font-size: 0.8em;
+    color: #888;
+}

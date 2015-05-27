@@ -1,3 +1,4 @@
+import json
 import optparse
 import sys
 import urllib
@@ -115,7 +116,7 @@ def main():
 
             # Stuff the rich specs into the URL.
             if spec['is_sgaction']:
-                rich = dict((k[0], str(v)) for k, v in rich.iteritems())
+                rich = dict((k[0], v if isinstance(v, basestring) else json.dumps(v)) for k, v in rich.iteritems())
                 url += '/' + '&'.join('%s=%s' % (k, urllib.quote(v)) for k, v in rich.iteritems())
 
             # URLs need to use the formatting method.

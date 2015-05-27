@@ -19,3 +19,12 @@
     folder: Development / Testing [cog]
     title: "Raise Error [bug]"
     list_order: 94
+-
+    entrypoint: sgactions.examples:publish_is_geocache
+    title: "Development / Is Geocache? [brick]"
+    list_order: 95
+    entity_types:
+        - PublishEvent
+    rich:
+        filter: ['PublishEvent.sg_type', '==', 'maya_geocache']
+

@@ -40,42 +40,145 @@ if (window.SGActions != undefined) {
 
 
 
+    var create_self_links = function(entity, _seen) {
+        
+        // Recursion guard (for extra safety).
+        _seen = _seen || {}
+        _seen[entity.type] = _seen[entity.type] || {}
+        if (_seen[entity.type][entity.id]) {
+            return;
+        }
+        _seen[entity.type][entity.id] = true;
+
+        entity[entity.type] = entity
+        for (var key in entity) {
+            if (entity.hasOwnProperty(key) && entity[key] && entity[key].type && entity[key].id) {
+                create_self_links(entity[key], _seen)
+            }
+        }
+
+    }
+
+    var clone = function(x) {
+        return JSON.parse(JSON.stringify(x));
+    }
+
+    var get_selected_entities = function(entity_page) {
+
+        var selected_eids = entity_page.selected_entities;
+        if (selected_eids.length < 1) {
+            return [];
+        }
+
+        var content_widget = entity_page.get_content_widget();
+        var entity_set = content_widget.get_entity_data_store();
+        var entity_type = entity_page.get_content_widget_entity_type();
+        var schema_fields = SG.schema.entity_fields[entity_type];
+        
+        var eid_map = {};
+        var entities = [];
+
+        // Copy the basic data for each selected entity.
+        for (i = 0; i < selected_eids.length; i++) {
+            var eid = selected_eids[i];
+
+            var record = entity_set.id_map[eid];
+            var data = clone(record.row.data); // This is fast. Really.
+
+            data.type = entity_type; // Shotgun doesn't store this here.
+
+            eid_map[eid] = data;
+            entities.push(data)
+        }
+
+        // Extract the data used for grouping (which isn't in the record).
+        if (entity_set.grouped) {
+
+            var group_defs = entity_set.grouping;
+            var groups = entity_set.groups_with_idx;
+            for (i = 0; i < groups.length; i++) {
+                var group = groups[i];
+
+                for (j = 0; j < group.ids.length; j++) {
+                    var eid = group.ids[j];
+
+                    var entity = eid_map[eid];
+                    if (!entity) {
+                        // Not selected, so don't care.
+                        continue
+                    }
+
+                    for (k = 0; k < group_defs.length; k++) {
+                        entity[group_defs[k].column] = clone(group.template_values[k])
+                    }
+                }
+            }
+        }
+
+        // Provide typed links to self in all entities.
+        for (i = 0; i < entities.length; i++) {
+            create_self_links(entities[i]);
+        }
+
+        return entities;
+    }
+
+    var evaluate_filter = function(filter, entity) {
+
+        var attrs = filter[0].split('.')
+        var head = entity;
+        try {
+            for (var i = 0; i < attrs.length; i++) {
+                var attr = attrs[i]
+                head = head[attr]
+            }
+        } catch (e) {
+            return;
+        }
+
+        switch (filter[1]) {
+            case 'is':
+            case 'eq':
+            case '==':
+                return head == filter[2];
+                break;
+            default:
+                throw "unknown operator: " + filter[1];
+        }
+
+    }
+
+    var evaluate_filter_for_many = function(filter, entities) {
+        var totals = {
+            pass: 0,
+            fail: 0,
+            unknown: 0,
+            total: 0
+        }
+        for (var i = 0; i < entities.length; i++) {
+            var res = evaluate_filter(filter, entities[i]);
+            if (res == undefined) {
+                totals.unknown += 1
+            } else {
+                totals[res ? 'pass' : 'fail'] += 1
+            }
+            totals.total += 1
+        }
+        return totals;
+
+    }
+
+
+
+
     var original_render = window.SG.Menu.prototype.render_menu_items;
     window.Ext.override(window.SG.Menu, {
         render_menu_items: function() {
             
-            
-            // console.trace();
-            // console.log(this);
-
-            /*
-            // this.parent is often EntityQueryPage
-            // console.log(this.parent.get_content_widget_entity_type());
-            // console.log(this.parent);
-            // console.log(this.parent.selected_entities)
-
-            var parent = this.parent;
-            var content_widget = parent.get_content_widget();
-            var entity_set = content_widget.get_entity_data_store();
-            var selected_entities = parent.selected_entities;
-            var entity_type = parent.get_content_widget_entity_type();
-            var schema_fields = SG.schema.entity_fields[entity_type];
-
-            // console.log(entity_set); // this is "owner"
-
-            for (var i = 0; i < selected_entities.length; i++) {
-                rec = entity_set.get_record_by_id(selected_entities[i]);
-                // rec.owner.grouping[group_col_i].column describes group names
-                // rec.owner.groups_with_idx[group_i].display_values is the display string of the grouped columns
-                // rec.owner.groups_with_idx[group_i].template_values is the value of the grouped columns
-                // rec.owner.groups_with_idx[group_i].ids is the ids of the entities contained
-                console.log(rec);
-            }
-            //*/
-
-
             try {
-                
+
+                var selected = null
+
                 // Parse and set the data.
                 for (var i = 0; i < this.items.length; i++) {
 
@@ -84,6 +187,8 @@ if (window.SGActions != undefined) {
                     // The undefined check is our tenuous hold on folders
                     // that are created for ActionMenuItems.
                     if (item.url || (item.order !== undefined && item.disabled === undefined)) {
+
+                        var filter = null;
 
                         if (/^sgaction/.test(item.url || '')) {
 
@@ -99,9 +204,12 @@ if (window.SGActions != undefined) {
                                 }
                             }
 
+
                             item.html = rich.t || item.html;
                             item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
                             item.heading = rich.h;
+
+                            filter = rich.f ? JSON.parse(rich.f) : null;
                             
                         }
 
@@ -119,6 +227,22 @@ if (window.SGActions != undefined) {
                             item.html = m[1];
                             item.icon_name = 'silk-icon silk-icon-' + m[2];
                         }
+
+                        // Styling for expression.
+                        if (filter) {
+                            if (selected == null) {
+                                selected = get_selected_entities(this.parent)
+                            }
+                            var totals = evaluate_filter_for_many(filter, selected);
+                            if (totals.pass && totals.fail) {
+                                item.html = item.html + '<span class="sgactions-filter-count"> (' + totals.pass + ' of ' + totals.total + ')</span>'
+                                item.item_class = 'sgactions-filter-passfail'
+                            } else if (totals.fail) {
+                                item.disabled = true;
+                            }
+                        }
+
+
                     }
 
                 }
@@ -143,6 +267,7 @@ if (window.SGActions != undefined) {
             
             } catch (err) {
                 console.log('[SGActions] error in render_menu_items:', err);
+                console.log(err.stack);
             }
             
             // this.items.push({html: "Submenu test", submenu:{items:[{html: 'Child'}]}});
@@ -166,16 +291,18 @@ if (window.SGActions != undefined) {
                 if (SGActions.nativeCapabilities.dispatch && base_url.indexOf("sgaction:") === 0) {
 
                     console.log('[SGActions] native dispatch:', base_url);
-                    var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
 
-                    delete this.custom_external_action.base_url;
-                    delete this.custom_external_action.poll_for_data_updates;
+                    // Lifted from Shotgun's source.
+                    var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
 
                     SGActions.postNative({
                         type: 'dispatch',
                         url: url
                     })
 
+                    // Lifted from Shotgun's source.
+                    delete this.custom_external_action.base_url;
+                    delete this.custom_external_action.poll_for_data_updates;
                     var content_widget = this.get_content_widget();
                     content_widget.hide_loading_overlay();
                     if (poll_for_data_updates) {

@@ -2,6 +2,7 @@
 - native messaging:
     - detect when the native handler falls down, and try to bring it back up
     - try/catch around all of the monkey patching, so that we can fail gracefully
+    
 
 - Use native OS X APIs for notifications (if we are in an app bundle... which we are most of the time).
 
