@@ -3,45 +3,73 @@
 import json
 import struct
 import sys
+import traceback
+import subprocess
 
 
-def send(msg):
-    msg = json.dumps(msg)
-    sys.stdout.write(struct.pack('I', len(msg)))
-    sys.stdout.write(msg)
+def log(*args):
+    sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
+    sys.stderr.flush()
+
+
+
+handlers = {}
+
+def handler(func):
+    handlers[func.__name__] = func
+    return func
+
+
+def reply(orig, **msg):
+    msg['dst'] = orig.get('src') or orig
+    send(**msg)
+
+
+def send(**msg):
+    msg['src'] = 'native'
+    encoded_msg = json.dumps(msg)
+    sys.stdout.write(struct.pack('I', len(encoded_msg)))
+    sys.stdout.write(encoded_msg)
     sys.stdout.flush()
 
-send("native messaging start")
+
+@handler
+def hello(**kw):
+    reply(kw,
+        type='hello',
+        capabilities={'dispatch': True}
+    )
+
+@handler
+def dispatch(url, **kw):
+    log('dispatching', url)
+    proc = subprocess.Popen(['python', '-m', 'sgactions.dispatch', url], stdout=sys.stderr)
+
 
 while True:
 
-    raw_size  = sys.stdin.read(4)
+    raw_size = sys.stdin.read(4)
     if not raw_size:
+        # We are being shut down!
         break
-    print >> sys.stderr, repr(raw_size)
 
-    size, = struct.unpack('I', raw_size)
+    try:
+        size, = struct.unpack('I', raw_size)
+        raw_msg = sys.stdin.read(size)
+        msg = json.loads(raw_msg)
+    except Exception as e:
+        log('exception during message reading:')
+        traceback.print_exc()
+        continue
 
-    print >> sys.stderr, repr(size)
+    log('message:', json.dumps(msg, sort_keys=True))
 
-    raw_msg = sys.stdin.read(size)
-    msg = json.loads(raw_msg)
-
-    print >> sys.stderr, 'got:', json.dumps(raw_msg)
-
-    if msg.get('type') == 'hello':
-        send({
-            'src': 'native',
-            'dst': msg['src'],
-            'type': 'hello',
-            'capabilities': ['open_url'],
-        })
-
+    if msg.get('type') in handlers:
+        try:
+            handlers[msg['type']](**msg)
+        except Exception as e:
+            log('exception during message handling:')
+            traceback.print_exc()
     else:
-        send({
-            'src': 'native',
-            'dst': msg['src'],
-            'type': 'error',
-            'error': 'unknown type %r' % msg.get('type')
-        })
+        log('unknown message type: %s' % msg.get('type'))
 

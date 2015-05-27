@@ -30,7 +30,7 @@ def main(url):
         m = re.match(r'^([\w.]+):(\w+)$', netloc)
         if not m:
             print >>sys.stderr, 'entrypoint must be like "package.module:function"'
-            exit(1)
+            return 1
         module_name, function_name = m.groups()
     
         # Load the module, and dispatch to the function.
@@ -70,6 +70,6 @@ if __name__ == '__main__':
     else:
         url = sys.argv[1]
     
-    main(url)
+    exit(main(url) or 0)
     
     

@@ -7,7 +7,12 @@ if (window.SGActions != undefined) {
 } else {
 
     SGActions = {
-        nativeCapabilities: []
+        nativeCapabilities: {},
+        postNative: function(msg) {
+            msg.src = 'page';
+            msg.dst = 'native';
+            window.postMessage({sgactions: msg}, '*')
+        }
     }
 
     console.log('[SGActions] loaded')
@@ -29,11 +34,7 @@ if (window.SGActions != undefined) {
         }
     })
 
-    window.postMessage({sgactions: {
-        src: 'page',
-        dst: 'native',
-        type: 'hello'
-    }}, '*')
+    SGActions.postNative({type: 'hello'})
 
 
 
@@ -42,9 +43,11 @@ if (window.SGActions != undefined) {
     window.Ext.override(window.SG.Menu, {
         render_menu_items: function() {
             
+            
             // console.trace();
             console.log(this);
 
+            /*
             // this.parent is often EntityQueryPage
             // console.log(this.parent.get_content_widget_entity_type());
             // console.log(this.parent);
@@ -67,19 +70,7 @@ if (window.SGActions != undefined) {
                 // rec.owner.groups_with_idx[group_i].ids is the ids of the entities contained
                 console.log(rec);
             }
-
-            this.items.push({
-                disabled: false,
-                heading: null,
-                html: "Testing Injected",
-                icon_name: "icon_edit",
-                item_selected: { // Callback for when selected.
-                    fn: function() {
-                        console.log('here, in', this)
-                    },
-                    scope: this // `this` in the function
-                }
-            })
+            //*/
 
 
             try {
@@ -158,6 +149,41 @@ if (window.SGActions != undefined) {
             return original.apply(this, arguments);
         }
     });
+
+
+    var o_custom_external_action_launch = window.SG.Widget.EntityQuery.EntityQueryPage.prototype.custom_external_action_launch;
+
+    window.Ext.override(window.SG.Widget.EntityQuery.EntityQueryPage, {
+        custom_external_action_launch: function() {
+
+            var base_url = this.custom_external_action.base_url;
+            var poll_for_data_updates = this.custom_external_action.poll_for_data_updates;
+
+            if (SGActions.nativeCapabilities.dispatch && base_url.indexOf("sgaction:") === 0) {
+
+                console.log('[SGActions] native dispatch:', base_url);
+                var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
+                
+                delete this.custom_external_action.base_url;
+                delete this.custom_external_action.poll_for_data_updates;
+
+                SGActions.postNative({
+                    type: 'dispatch',
+                    url: url
+                })
+
+                var content_widget = this.get_content_widget();
+                content_widget.hide_loading_overlay();
+                if (poll_for_data_updates) {
+                    SG.Repo.request_news()
+                }
+
+            }
+
+            return o_custom_external_action_launch.apply(this, arguments);
+
+        }
+    })
 
 } // load check
 
