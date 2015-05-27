@@ -6,6 +6,8 @@ if (window.SGActions != undefined) {
 
 } else {
 
+    console.log('[SGActions] loaded')
+
     SGActions = {
         nativeCapabilities: {},
         postNative: function(msg) {
@@ -15,9 +17,8 @@ if (window.SGActions != undefined) {
         }
     }
 
-    console.log('[SGActions] loaded')
-
     window.addEventListener("message", function(e) {
+
         if (e.source != window) return; // Must be from this page.
         if (!e.data.sgactions) return; // Must be sgactions.
         if (e.data.sgactions.dst != 'page') return; // Must be sent to us.
@@ -30,22 +31,22 @@ if (window.SGActions != undefined) {
                 SGActions.nativeCapabilities = msg.capabilities;
                 break;
             default:
-                console.log('unknown message:', msg);
+                console.log('[SGActions] unknown message:', msg);
         }
     })
 
+    // Say hello to the native messenger; it will tell is what it's capabilities are.
     SGActions.postNative({type: 'hello'})
 
 
 
-    var original = window.SG.Menu.prototype.render_menu_items;
-
+    var original_render = window.SG.Menu.prototype.render_menu_items;
     window.Ext.override(window.SG.Menu, {
         render_menu_items: function() {
             
             
             // console.trace();
-            console.log(this);
+            // console.log(this);
 
             /*
             // this.parent is often EntityQueryPage
@@ -141,46 +142,60 @@ if (window.SGActions != undefined) {
                 
             
             } catch (err) {
-                console.log(err);
+                console.log('[SGActions] error in render_menu_items:', err);
             }
             
             // this.items.push({html: "Submenu test", submenu:{items:[{html: 'Child'}]}});
             
-            return original.apply(this, arguments);
+            return original_render.apply(this, arguments);
         }
     });
 
 
-    var o_custom_external_action_launch = window.SG.Widget.EntityQuery.EntityQueryPage.prototype.custom_external_action_launch;
-
+    var original_launch = window.SG.Widget.EntityQuery.EntityQueryPage.prototype.custom_external_action_launch;
     window.Ext.override(window.SG.Widget.EntityQuery.EntityQueryPage, {
         custom_external_action_launch: function() {
 
-            var base_url = this.custom_external_action.base_url;
-            var poll_for_data_updates = this.custom_external_action.poll_for_data_updates;
+            var base_url, poll_for_data_updates;
 
-            if (SGActions.nativeCapabilities.dispatch && base_url.indexOf("sgaction:") === 0) {
+            try {
 
-                console.log('[SGActions] native dispatch:', base_url);
-                var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
-                
-                delete this.custom_external_action.base_url;
-                delete this.custom_external_action.poll_for_data_updates;
+                base_url = this.custom_external_action.base_url;
+                poll_for_data_updates = this.custom_external_action.poll_for_data_updates;
 
-                SGActions.postNative({
-                    type: 'dispatch',
-                    url: url
-                })
+                if (SGActions.nativeCapabilities.dispatch && base_url.indexOf("sgaction:") === 0) {
 
-                var content_widget = this.get_content_widget();
-                content_widget.hide_loading_overlay();
-                if (poll_for_data_updates) {
-                    SG.Repo.request_news()
+                    console.log('[SGActions] native dispatch:', base_url);
+                    var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
+
+                    delete this.custom_external_action.base_url;
+                    delete this.custom_external_action.poll_for_data_updates;
+
+                    SGActions.postNative({
+                        type: 'dispatch',
+                        url: url
+                    })
+
+                    var content_widget = this.get_content_widget();
+                    content_widget.hide_loading_overlay();
+                    if (poll_for_data_updates) {
+                        SG.Repo.request_news()
+                    }
+                    return
+
                 }
 
+            } catch(err) {
+                console.log('[SGActions] error in custom_external_action_launch:', err);
+                if (base_url != undefined) {
+                    this.custom_external_action.base_url = base_url;
+                }
+                if (poll_for_data_updates != undefined) {
+                    this.custom_external_action.poll_for_data_updates = poll_for_data_updates;
+                }
             }
 
-            return o_custom_external_action_launch.apply(this, arguments);
+            return original_launch.apply(this, arguments);
 
         }
     })
