@@ -21,14 +21,17 @@ def google_hash(text):
     return ''.join(_google_hash_map[x] for x in digest)
 
 
-def install_chrome_extension(path):
+def install_chrome_extension(profile_dir):
     
-    if not os.path.exists(path):
+
+    if not os.path.exists(profile_dir):
         return
-    print '\tChecking', path
-    prefs = json.load(open(path))
+    print '\tChecking', profile_dir
+
+    prefs_path = os.path.join(profile_dir, 'Default', 'Preferences')
+    prefs = json.load(open(prefs_path))
     
-    changed = False
+    prefs_changed = False
     
     ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
     ext_rel_path = os.path.relpath(ext_path, os.path.abspath(os.path.join(__file__, '..', '..')))
@@ -42,7 +45,7 @@ def install_chrome_extension(path):
             else:
                 print '\t\tRemoving other:', v['path']
                 del prefs['extensions']['settings'][k]
-                changed = True
+                prefs_changed = True
     
     # Install the extension.
     if ext_id not in prefs['extensions']['settings']:
@@ -63,14 +66,14 @@ def install_chrome_extension(path):
            "path": ext_path,
            "state": 1
         }
-        changed = True
+        prefs_changed = True
     
+    if prefs_changed:
+        print '\t\tWriting changes'
+        json.dump(prefs, open(prefs_path, 'w'), indent=4, sort_keys=True)
+
     # Install the native messenger
-    native_dir = os.path.expanduser(
-        '~/Library/Application Support/Google/Chrome/NativeMessagingHosts'
-        if sys.platform == 'darwin' else
-        '~/.config/google-chrome/NativeMessagingHosts'
-    )
+    native_dir = os.path.join(profile_dir, 'NativeMessagingHosts')
     native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
     native_origin = "chrome-extension://%s/" % ext_id
     native_changed = False
@@ -79,7 +82,7 @@ def install_chrome_extension(path):
         existing = json.load(open(native_path))
         native_changed = existing['allowed_origins'] != [native_origin]
     if native_changed or not os.path.exists(native_path):
-        print '\tInstalling native messenger', native_path
+        print '\t\tInstalling native messenger', native_path
         if not os.path.exists(native_dir):
             os.makedirs(native_dir)
         with open(native_path, 'wb') as fh:
@@ -91,9 +94,6 @@ def install_chrome_extension(path):
                 "allowed_origins": [native_origin],
             }))
 
-    if changed:
-        print '\t\tWriting changes...'
-        json.dump(prefs, open(path, 'w'), indent=4, sort_keys=True)
 
 
 
@@ -107,9 +107,9 @@ def main():
         ])        
 
     print 'Installing Chrome extension...'
-    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Preferences'))
-    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary/Default/Preferences'))
-    install_chrome_extension(os.path.expanduser('~/.config/google-chrome/Default/Preferences'))
+    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome'))
+    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary'))
+    install_chrome_extension(os.path.expanduser('~/.config/google-chrome'))
     print 'Done.'
     
     print 'Installing OS X Services...'
