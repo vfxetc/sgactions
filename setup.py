@@ -1,3 +1,5 @@
+import os
+
 from setuptools import setup, find_packages
 
 
@@ -17,6 +19,31 @@ setup(
     install_requires='''
         pyyaml
     ''',
+
+    metatools_apps=[{
+
+        'name': 'SGActions',
+        'identifier': 'com.westernx.sgactions',
+        'target_type': 'entrypoint',
+        'target': 'sgactions.dispatch:main',
+        'use_compiled_bootstrap': True,
+        'icon': 'sgactions/art/sgactions.icns',
+
+        # Bake in the development path if we are in dev mode.
+        'python_path': os.environ['PYTHONPATH'].split(':') if '--dev' in os.environ.get('VEE_EXEC_ARGS', '') else [],
+
+        # Place us into the global applications folder if in vee.
+        'bundle_path': (
+            os.path.join(os.environ['VEE'], 'Applications', 'SGActions.app')
+            if 'VEE' in os.environ else
+            'build/lib/sgactions/platforms/darwin/SGActions.app'
+        ),
+        'plist_defaults': {
+            # 'LSBackgroundOnly': True, # Don't show up in dock.
+        }
+
+    }],
+
 
     classifiers=[
         'Intended Audience :: Developers',
