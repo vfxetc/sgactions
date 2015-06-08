@@ -1,21 +1,9 @@
 
-- native messaging:
-    - detect when the native handler falls down, and try to bring it back up
-    - try/catch around all of the monkey patching, so that we can fail gracefully
-    
-
-- Use native OS X APIs for notifications (if we are in an app bundle... which we are most of the time).
-
 - Logging via `logging` instead of via stdout.
 
 - sgactions rich ACL
     - e.g.: group==Admin, group==Manager
     - disable menu items
-
-- add jump to terminal in shotgun
-- add jump to terminal and shotgun in finder
-- look at doing a quick finder plugin for context managers
-    http://www.abracode.com/free/cmworkshop/on_my_command.html
 
 - Task launcher
     - "Launch Task Toolbox..." from Task

@@ -72,7 +72,13 @@ def install_chrome_extension(path):
         '~/.config/google-chrome/NativeMessagingHosts'
     )
     native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
-    if changed or not os.path.exists(native_path):
+    native_origin = "chrome-extension://%s/" % ext_id
+    native_changed = False
+    # If it exists, make sure it allows the right extension
+    if os.path.exists(native_path):
+        existing = json.load(open(native_path))
+        native_changed = existing['allowed_origins'] != [native_origin]
+    if native_changed or not os.path.exists(native_path):
         print '\tInstalling native messenger', native_path
         if not os.path.exists(native_dir):
             os.makedirs(native_dir)
@@ -82,9 +88,7 @@ def install_chrome_extension(path):
                 "description": "SGActions",
                 "path": os.path.join(ext_path, 'native.sh'),
                 "type": "stdio",
-                "allowed_origins": [
-                    "chrome-extension://%s/" % ext_id,
-                ],
+                "allowed_origins": [native_origin],
             }))
 
     if changed:
