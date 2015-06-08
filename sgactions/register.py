@@ -95,38 +95,12 @@ def install_chrome_extension(path):
 
     
 def main():
-    
-    if sys.platform.startswith('darwin'):
-        
-        lsregister = '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister'
-        handler = os.path.abspath(os.path.join(__file__, '..', 'platforms', 'darwin', 'Shotgun Action Dispatcher.app'))
-        
-        print 'Cleaning old handlers...'
-        proc = Popen([lsregister, '-dump'], stdout=PIPE, stderr=PIPE)
-        for line in proc.stdout:
-            m = re.match(r'\s*path:\s*(.+?/sgactions/.+?\.app)/?\s*$', line)
-            if m and m.group(1) != handler:
-                print '\t' + m.group(1)
-                call([lsregister, '-u', m.group(1)], stdout=PIPE, stderr=PIPE)
-        
-        print 'Registering new handler...'
-        call([
-            lsregister,
-            '-v',
-            handler,
-        ])
-        
-        print 'Done.'
-    
-    elif sys.platform.startswith('linux'):
+
+    if sys.platform.startswith('linux'):
         # All of the logic is in a shell script.
         call([
             os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
-        ])
-    
-    else:
-        print 'Cannot install protocol handlers on %s' % sys.platform
-        
+        ])        
 
     print 'Installing Chrome extension...'
     install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Preferences'))

@@ -7,8 +7,16 @@ import urlparse
 from . import utils
 from . import tickets
 
-def main(url):
+def main():
     
+    # Really long URLs may come from tempfiles.
+    if len(sys.argv) == 3 and sys.argv[1] == '-f':
+        path = sys.argv[2]
+        url = open(path).read()
+        os.unlink(path)
+    else:
+        url = sys.argv[1]
+
     try:
     
         # Parse the URL into scheme, path, and query.
@@ -60,16 +68,6 @@ def main(url):
                 
 
 if __name__ == '__main__':
-    
-    # Really long URLs may come from tempfiles.
-    if len(sys.argv) == 3 and sys.argv[1] == '-f':
-        path = sys.argv[2]
-        url = open(path).read()
-        os.unlink(path)
-    
-    else:
-        url = sys.argv[1]
-    
-    exit(main(url) or 0)
-    
+    exit(main() or 0)
+
     

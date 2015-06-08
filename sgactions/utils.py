@@ -9,6 +9,8 @@ import shotgun_api3
 
 def notify(message, title=None, sticky=False):
     
+    from uitools.notifications import Notification
+
     if title is None:
         title = 'SGActions'
 
@@ -18,49 +20,7 @@ def notify(message, title=None, sticky=False):
     print message
     print '---'
     
-    if sys.platform.startswith('darwin'):
-
-        fd, message_path = tempfile.mkstemp('.txt', 'sgactions.' + re.sub(r'\W+', '-', title) + '.')
-        os.write(fd, message)
-        os.close(fd)
-
-        argv = ['terminal-notifier',
-            '-title', title,
-            '-message', message,
-            '-open', 'file://' + message_path,
-        ]
-        try:
-            check_call(argv)
-            return
-        except Exception as e:
-            print e
-
-        # AppleScript works since 10.9.
-        argv = ['osascript', '-e', 'display notification "%s" with title "%s"' % (
-            message.replace('"', '\\"'),
-            title.replace('"', '\\"'),
-        )]
-        try:
-            check_call(argv)
-            return
-        except Exception as e:
-            print e
-        
-        argv = ['growlnotify',
-            '--name', 'Shotgun Action Dispatcher',
-            '--title', title,
-            '--message', message
-        ]
-        if sticky:
-            argv.append('-s')
-        call(argv)
-
-    else:
-        argv = ['notify-send']
-        if sticky:
-            argv.extend(['-t', '3600000'])
-        argv.extend([title, message])
-        call(argv)
+    Notification(title, message).send()
 
 
 def get_shotgun(*args, **kwargs):
