@@ -71,14 +71,14 @@ def install_chrome_extension(path):
         if sys.platform == 'darwin' else
         '~/.config/google-chrome/NativeMessagingHosts'
     )
-    native_path = os.path.join(native_dir, 'com.keypics.sgactions.json')
+    native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
     if changed or not os.path.exists(native_path):
         print '\tInstalling native messenger', native_path
         if not os.path.exists(native_dir):
             os.makedirs(native_dir)
         with open(native_path, 'wb') as fh:
             fh.write(json.dumps({
-                "name": "com.keypics.sgactions",
+                "name": "com.westernx.sgactions",
                 "description": "SGActions",
                 "path": os.path.join(ext_path, 'native.sh'),
                 "type": "stdio",

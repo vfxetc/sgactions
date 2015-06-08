@@ -1,21 +1,31 @@
+import argparse
 import os
 import re
 import sys
 import traceback
 import urlparse
 
-from . import utils
-from . import tickets
-
 def main():
     
-    # Really long URLs may come from tempfiles.
-    if len(sys.argv) == 3 and sys.argv[1] == '-f':
-        path = sys.argv[2]
-        url = open(path).read()
-        os.unlink(path)
-    else:
-        url = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', choices=['sgactions.dispatch'])
+    parser.add_argument('--chrome-native', action='store_true')
+    parser.add_argument('-f', '--file', action='store_true')
+    parser.add_argument('url', nargs='?', default='')
+    args = parser.parse_args()
+
+    if args.chrome_native:
+        from sgactions.browsers.chrome_native import main as native_main
+        exit(native_main())
+
+    url = args.url
+    if args.file:
+        url = open(args.file).read()
+        os.unlink(args.file)
+
+    # Deferred until after the native dispatcher.
+    from . import utils
+    from . import tickets
 
     try:
     
@@ -37,7 +47,7 @@ def main():
         # Parse the path into an entrypoint.
         m = re.match(r'^([\w.]+):(\w+)$', netloc)
         if not m:
-            print >>sys.stderr, 'entrypoint must be like "package.module:function"'
+            print >>sys.stderr, 'entrypoint must be like "package.module:function"; got "%s"' % netloc
             return 1
         module_name, function_name = m.groups()
     
