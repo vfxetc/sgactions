@@ -30,6 +30,15 @@ if (window.SGActions != undefined) {
                 console.log('[SGActions] native capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
                 break;
+            case 'error':
+                console.log('[SGActions] native error:', msg['error']);
+                console.log('[SGActions] forgetting native connection');
+                SGActions.nativeCapabilities = {};
+                break;
+            case 'disconnect':
+                console.log('[SGActions] native disconnected');
+                SGActions.nativeCapabilities = {};
+                break;
             default:
                 console.log('[SGActions] unknown message:', msg);
         }

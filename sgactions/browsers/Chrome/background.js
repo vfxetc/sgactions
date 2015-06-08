@@ -23,7 +23,8 @@ nativePort.onDisconnect.addListener(function() {
     console.log("[SGActions] native disconnected");
     broadcast({
         src: 'background',
-        dst: 'page'
+        dst: 'page',
+        type: 'disconnect',
     })
     // TODO: Warn others.
     // TODO: Reconnect.
@@ -64,6 +65,7 @@ chrome.runtime.onConnect.addListener(function (conn) {
                 conn.postMessage({
                     src: 'native',
                     dst: msg.src.next,
+                    type: 'error',
                     error: e.toString()
                 })
             }
