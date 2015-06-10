@@ -1,4 +1,14 @@
 
+- expose Shotgun alerts to Python via the native messenger
+    - new SG.AlertDialog({title: 'SGActions Error', body: 'The native dispatcher errored; please trigger that action again.'}, {}).present()
+    - new SG.AlertDialog({
+        title: 'SGActions Error',
+        body: 'The native dispatcher errored; please trigger that action again.',
+        action: {extra_cls: 'blue_button'}
+    }, {}).present()
+    
+    - new SG.ConfirmDialog({title: 'SGActions Error', body: 'The native dispatcher errored; please trigger that action again.'}, {}).present()
+
 - Logging via `logging` instead of via stdout.
 
 - sgactions rich ACL

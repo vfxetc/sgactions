@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+import functools
 import json
 import struct
+import subprocess
 import sys
 import traceback
-import subprocess
 
 from ..dispatch import dispatch as _dispatch
 
@@ -13,11 +14,13 @@ def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
-
+_current_source = None
 _handlers = {}
 
-def handler(func):
-    _handlers[func.__name__] = func
+def handler(func, name=None):
+    if isinstance(func, basestring):
+        return functools.partial(handler, name=func)
+    _handlers[name or func.__name__] = func
     return func
 
 def reply(orig, **msg):
@@ -62,6 +65,8 @@ def dispatch(url, **kw):
 
 def main():
 
+    global _current_source
+
     # We need to take over both stdout and stderr so that print statements
     # don't result in chrome thinking it is getting a message back.
     sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
@@ -84,6 +89,9 @@ def main():
 
         log('recv', size, raw_msg)
 
+        _current_source = msg.get('src')
+        _progress_cancelled = None
+
         if msg.get('type') in _handlers:
             try:
                 _handlers[msg['type']](**msg)
@@ -93,6 +101,33 @@ def main():
         else:
             reply(msg, type='error', error='unknown message type %r' % msg.get('type'))
             log('unknown message type: %s' % msg.get('type'))
+
+    _running = False
+
+
+# For runtime!
+def alert(message, title=None):
+    if _current_source:
+        send(dst=_current_source, type='alert', title=title, message=message)
+    else:
+        raise RuntimeError('no current native handler')
+
+def progress(message, title=None):
+    if _current_source:
+        send(dst=_current_source, type='progress', title=title, message=message)
+    else:
+        raise RuntimeError('no current native handler')
+
+@handler('progress_cancelled')
+def on_progress_cancelled(**msg):
+    progress_cancelled(True)
+
+_progress_cancelled = None
+def progress_cancelled(value=None):
+    global _progress_cancelled
+    if value is not None:
+        _progress_cancelled = value
+    return _progress_cancelled
 
 
 if __name__ == '__main__':

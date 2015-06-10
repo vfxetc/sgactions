@@ -7,10 +7,9 @@ from subprocess import call, check_call, CalledProcessError
 import shotgun_api3
 
 
+
 def notify(message, title=None, sticky=False):
     
-    from uitools.notifications import Notification
-
     if title is None:
         title = 'SGActions'
 
@@ -19,8 +18,29 @@ def notify(message, title=None, sticky=False):
     print '=' * len(str(title))
     print message
     print '---'
-    
-    Notification(title, message).send()
+
+    try:
+        from .browsers.chrome_native import alert
+        alert(message, title)
+    except RuntimeError:
+        from uitools.notifications import Notification
+        Notification(title, message).send()
+
+
+def progress(message, title=None):
+    try:
+        from .browsers.chrome_native import progress
+        progress(message, title)
+    except RuntimeError:
+        pass
+
+
+def progress_cancelled():
+    try:
+        from .browsers.chrome_native import progress_cancelled
+        return progress_cancelled()
+    except RuntimeError:
+        pass
 
 
 def get_shotgun(*args, **kwargs):

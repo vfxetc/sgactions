@@ -49,9 +49,9 @@ def dispatch(url, reload=False):
             ticket_id = tickets.get_ticket_for_exception(*sys.exc_info())
             tickets.reply_to_ticket(ticket_id, [
                 ('Exception', sys.exc_info()),
-                ('SGAction Kwargs', query),
+                ('SGAction Kwargs', kwargs),
                 ('OS Environment', dict(os.environ)),
-            ], user_id=query.get('user_id'))
+            ], user_id=kwargs.get('user_id'))
             utils.notify(
                 title='SGAction Error',
                 message='%s: %s\nReplied to Ticket %d.' % (type(e).__name__, e, ticket_id),

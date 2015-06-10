@@ -14,7 +14,8 @@ if (window.SGActions != undefined) {
             msg.src = 'page';
             msg.dst = 'native';
             window.postMessage({sgactions: msg}, '*')
-        }
+        },
+        progressDialog: null
     }
 
     window.addEventListener("message", function(e) {
@@ -32,16 +33,61 @@ if (window.SGActions != undefined) {
                 break;
             case 'error':
                 console.log('[SGActions] native error:', msg['error']);
-                console.log('[SGActions] forgetting native connection');
-                SGActions.nativeCapabilities = {};
                 break;
             case 'disconnect':
                 console.log('[SGActions] native disconnected');
                 SGActions.nativeCapabilities = {};
                 break;
             case 'result':
+                if (SGActions.progressDialog) {
+                    SGActions.progressDialog.hide();
+                    SGActions.progressDialog = null
+                }
                 console.log('[SGActions] action result:', msg['result']);
                 break
+            case 'progress':
+                try {
+                    var dialog = SGActions.progressDialog = SGActions.progressDialog || new SG.AlertDialog({
+                        action: {
+                            label: 'Cancel',
+                            extra_cls: 'red_button',
+                            callback: {fn: function() {
+                                if (SGActions.progressDialog) {
+                                    SGActions.progressDialog.hide()
+                                    SGActions.progressDialog = null
+                                    SGActions.postNative({type: 'progress_cancelled'})
+                                }
+                            }}
+                        }
+                    }, {})
+                    dialog.title = msg.title || 'SGActions Progress'
+                    dialog.body  = (msg.message || 'Alert!').replace(/\n/g, '<br>')
+                    dialog.present();
+                } catch (e) {
+                    console.log('[SGActions] error during progress:', e);
+                    console.traceback();
+                }
+                break
+
+            case 'alert':
+                if (SGActions.progressDialog) {
+                    SGActions.progressDialog.hide();
+                    SGActions.progressDialog = null
+                }
+                try {
+                    var dialog = new SG.AlertDialog({
+                        title: msg.title || 'SGActions',
+                        body: (msg.message || 'Alert!').replace(/\n/g, '<br>'),
+                        action: {extra_cls: 'blue_button'},
+                        width: '800px',
+                    }, {})
+                    dialog.present();
+                } catch (e) {
+                    alert(msg.message)
+                    console.log('[SGActions] error during alert:', e);
+                    console.traceback();
+                }
+                break;
 
             default:
                 console.log('[SGActions] unknown message:', msg);
@@ -180,6 +226,7 @@ if (window.SGActions != undefined) {
         return totals;
 
     }
+
 
     // monkey-patch menu render (for icons, filtering, etc.)
     var original_render = window.SG.Menu.prototype.render_menu_items;
