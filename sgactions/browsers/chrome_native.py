@@ -7,7 +7,8 @@ import subprocess
 import sys
 import traceback
 
-from ..dispatch import dispatch as _dispatch
+# This must be absolute, since this script is run directly in Linux.
+from sgactions.dispatch import dispatch as _dispatch
 
 
 def log(*args):
