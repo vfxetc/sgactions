@@ -6,9 +6,10 @@ import struct
 import subprocess
 import sys
 import traceback
+import os
 
-# This must be absolute, since this script is run directly in Linux.
-from sgactions.dispatch import dispatch as _dispatch
+if __name__ == '__main__':
+    sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
 
 
 def log(*args):
@@ -50,7 +51,9 @@ def hello(**kw):
         type='hello',
         capabilities={'dispatch': True},
         executable=sys.executable,
-        file=__file__,
+        script=__file__,
+        bootstrapper=os.environ.get('SGACTIONS_NATIVE_SH'),
+        extension=os.environ.get('SGACTIONS_EXT_ID'),
     )
 
 
@@ -131,6 +134,10 @@ def progress_cancelled(value=None):
     return _progress_cancelled
 
 
+
+# This must be absolute, since this script is run directly in Linux.
+from sgactions.dispatch import dispatch as _dispatch
+
+
 if __name__ == '__main__':
     main()
-

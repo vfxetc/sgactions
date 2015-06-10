@@ -21,29 +21,27 @@ def google_hash(text):
     return ''.join(_google_hash_map[x] for x in digest)
 
 
-def install_chrome_extension(profile_dir):
-    
+def install_chrome_extension(profile_dir, ext_path):
 
     if not os.path.exists(profile_dir):
         return
-    print '\tChecking', profile_dir
+    print '\t' + profile_dir
 
     prefs_path = os.path.join(profile_dir, 'Default', 'Preferences')
     prefs = json.load(open(prefs_path))
     
     prefs_changed = False
     
-    ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
     ext_rel_path = os.path.relpath(ext_path, os.path.abspath(os.path.join(__file__, '..', '..')))
     ext_id = google_hash(ext_path)
-    
+
     # Remove all old extensions.
     for k, v in prefs['extensions']['settings'].items():
         if ext_rel_path in v.get('path', ''):
             if k == ext_id:
-                print '\t\tAlready installed'
+                print '\t\talready installed'
             else:
-                print '\t\tRemoving other:', v['path']
+                print '\t\tremoving other:', v['path']
                 del prefs['extensions']['settings'][k]
                 prefs_changed = True
     
@@ -72,71 +70,111 @@ def install_chrome_extension(profile_dir):
         print '\t\tWriting changes'
         json.dump(prefs, open(prefs_path, 'w'), indent=4, sort_keys=True)
 
-    # Install the native messenger
-    native_dir = os.path.join(profile_dir, 'NativeMessagingHosts')
+
+def get_native_messenger_origins(native_dir):
     native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
-    native_origin = "chrome-extension://%s/" % ext_id
     if os.path.exists(native_path):
-        existing = json.load(open(native_path))
-        native_origins = existing['allowed_origins']
-    else:
-        native_origins = []
+        print '\t' + native_path
+        try:
+            existing = json.load(open(native_path))
+            return existing['allowed_origins']
+        except ValueError:
+            pass
+    
+    return ()
 
-    if native_origin not in native_origins or not os.path.exists(native_path):
-        print '\t\tInstalling native messenger', native_path
-        if not os.path.exists(native_dir):
+
+def install_native_messenger(native_dir, ext_path, native_origins):
+
+    native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
+    print '\t' + native_path
+
+    if not os.path.exists(native_dir):
+        try:
             os.makedirs(native_dir)
-        native_origins.append(native_origin)
-        with open(native_path, 'wb') as fh:
-            fh.write(json.dumps({
-                "name": "com.westernx.sgactions",
-                "description": "SGActions",
-                "path": os.path.join(ext_path, 'native.sh'),
-                "type": "stdio",
-                "allowed_origins": native_origins,
-            }))
+        except OSError as e:
+            print '\t\tCANNOT MKDIR:', e
+            return
+
+    try:
+        fh = open(native_path, 'wb')
+    except IOError as e:
+        print '\t\tCANNOT WRITE:', e
+        return
+
+    with fh:
+        fh.write(json.dumps({
+            "name": "com.westernx.sgactions",
+            "description": "SGActions",
+            "path": os.path.join(ext_path, 'native.sh'),
+            "type": "stdio",
+            "allowed_origins": native_origins,
+        }))
 
 
 
 
     
-def main():
+def main():   
 
-    if sys.platform.startswith('linux'):
-        # All of the logic is in a shell script.
-        call([
-            os.path.join(os.path.dirname(__file__), 'register-linux.sh'),
-        ])        
+    ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
+    ext_paths = set((ext_path, os.path.realpath(ext_path)))
 
-    print 'Installing Chrome extension...'
-    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome'))
-    install_chrome_extension(os.path.expanduser('~/Library/Application Support/Google/Chrome Canary'))
-    install_chrome_extension(os.path.expanduser('~/.config/google-chrome'))
-    print 'Done.'
-    
-    print 'Installing OS X Services...'
-    
-    our_services = os.path.join(sgactions_root, 'sgactions', 'platforms', 'darwin', 'Services')
-    system_services = os.path.expanduser(os.path.join('~', 'Library', 'Services'))
-    for service_name in os.listdir(our_services):
-        if service_name.startswith('.'):
-            continue
-        print '\t' + service_name
-        
+    print 'installing Chrome extension:', ext_path
+    profile_dirs = [os.path.expanduser(x) for x in (
+        '~/Library/Application Support/Google/Chrome',
+        '~/Library/Application Support/Google/Chrome Canary',
+        '~/.config/google-chrome'
+    )]
+    for profile_dir in profile_dirs:
+        install_chrome_extension(profile_dir, ext_path)
 
-        src = os.path.join(our_services, service_name)
-        dst = os.path.join(system_services, service_name)
-        
-        # Try to make the folder first so that it puts it where I expect it to,
-        # since I've been having issues with this copy.
-        call(['mkdir', '-p', dst])
-        call(['rsync', '-ax', '--delete', src + '/', dst + '/'])
-        
+    native_dirs = [os.path.join(profile_dir, 'NativeMessagingHosts') for profile_dir in profile_dirs]
+    native_dirs.extend((
+        '/Library/Google/Chrome/NativeMessagingHosts',
+        '/Library/Application Support/Chromium/NativeMessagingHosts',
+    ) if sys.platform == 'darwin' else (
+        '/etc/opt/chrome/native-messaging-hosts',
+        '/etc/chromium/native-messaging-hosts',
+    ))
+
+    print 'finding existing native messengers'
+    native_origins = set("chrome-extension://%s/" % google_hash(ext_path) for ext_path in ext_paths)
+    for native_dir in native_dirs:
+        native_origins.update(get_native_messenger_origins(native_dir))
+    native_origins = list(sorted(native_origins))
+
+    print 'installing native messenger'
+    for native_dir in native_dirs:
+        install_native_messenger(native_dir, ext_path, native_origins)
+
     if sys.platform.startswith("darwin"):
-        print 'Refreshing services...'
+
+        print 'installing OS X services'
+        our_services = os.path.join(sgactions_root, 'sgactions', 'platforms', 'darwin', 'Services')
+        system_services = os.path.expanduser(os.path.join('~', 'Library', 'Services'))
+        for service_name in os.listdir(our_services):
+
+            if service_name.startswith('.'):
+                continue
+            print '\t' + service_name
+            
+            src = os.path.join(our_services, service_name)
+            dst = os.path.join(system_services, service_name)
+            
+            # Try to make the folder first so that it puts it where I expect it to,
+            # since I've been having issues with this copy.
+            call(['mkdir', '-p', dst])
+            call(['rsync', '-ax', '--delete', src + '/', dst + '/'])
+
+        print 'refreshing services'
         call(['/System/Library/CoreServices/pbs', '-flush'])
     
-    print 'Done.'
+    elif sys.platform.startswith('linux'):
+        call([os.path.join(os.path.dirname(__file__), 'register-linux.sh')])
+
+
+    print 'done'
 
 
 if __name__ == '__main__':
