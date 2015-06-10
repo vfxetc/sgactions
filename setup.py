@@ -29,6 +29,9 @@ setup(
         'use_compiled_bootstrap': True,
         'icon': 'sgactions/art/sgactions.icns',
 
+        'url_schemes': ['sgaction'],
+        'argv_emulation': True,
+        
         # Bake in the development path if we are in dev mode.
         'python_path': os.environ['PYTHONPATH'].split(':') if '--dev' in os.environ.get('VEE_EXEC_ARGS', '') else [],
 
