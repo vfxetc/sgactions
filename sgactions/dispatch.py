@@ -40,6 +40,7 @@ def parse_url(url):
 def dispatch(url, reload=False):
 
     try:
+        kwargs = {}
         entrypoint, kwargs = parse_url(url)
         func = load_entrypoint(entrypoint, reload=reload)
         return func(**kwargs)
@@ -49,7 +50,7 @@ def dispatch(url, reload=False):
             ticket_id = tickets.get_ticket_for_exception(*sys.exc_info())
             tickets.reply_to_ticket(ticket_id, [
                 ('Exception', sys.exc_info()),
-                ('SGAction Kwargs', kwargs),
+                ('SGAction Kwargs', kwargs or url),
                 ('OS Environment', dict(os.environ)),
             ], user_id=kwargs.get('user_id'))
             utils.notify(
@@ -85,6 +86,10 @@ def main():
     if args.file:
         url = open(args.file).read()
         os.unlink(args.file)
+
+    sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
+    
+    dispatch(url)
 
                 
 

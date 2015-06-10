@@ -112,9 +112,6 @@ def install_native_messenger(native_dir, ext_path, native_origins):
         }))
 
 
-
-
-    
 def main():   
 
     ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
