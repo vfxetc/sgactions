@@ -1,35 +1,51 @@
-console.log('[SGActions] background started');
+console.log('[SGActions] background started; runtime ID:', chrome.runtime.id);
 
-var nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
 
-nativePort.onMessage.addListener(function(msg) {
-    if (msg.dst && msg.dst.tab_id) {
-        console.log("[SGActions] message to", msg.dst.tab_id, msg);
+var logMessage = function(msg) {
+    var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
+    var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
+    console.log("[SGActions]", src, 'to', dst, msg);
+}
+
+var routeMessage = function(msg) {
+
+    var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
+    var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
+    console.log("[SGActions] message from", src, 'to', dst, msg);
+
+    if (msg.dst == 'background') {
+        // let it die here
+
+    } else if (msg.dst == 'native') {
+        try {
+            nativePort.postMessage(msg)
+        } catch (e) {
+            console.log("[SGActions] native errored:", e);
+            broadcast({
+                src: 'background',
+                dst: 'page',
+                type: 'disconnect',
+                error: e.toString()
+            })
+        }
+
+    } else if (msg.dst && msg.dst.tab_id) {
         var tab_id = msg.dst.tab_id;
         msg.dst = msg.dst.next;
         var conn = pageConnections[tab_id];
         if (conn != undefined) {
             conn.postMessage(msg);
         } else {
-            console.log('[SGActions] connection to tab', tab_id, 'is closed')
+            console.log('[SGActions] connection to tab', tab_id, 'is closed?!')
             delete pageConnections[tab_id];
         }
+
     } else {
-        console.log("[SGActions] UNHANDLED message from native", msg);
+        console.log("[SGActions] bad destination:", msg.dst, dst);
+
     }
-});
 
-nativePort.onDisconnect.addListener(function() {
-    console.log("[SGActions] native disconnected");
-    broadcast({
-        src: 'background',
-        dst: 'page',
-        type: 'disconnect',
-    })
-    // TODO: Warn others.
-    // TODO: Reconnect.
-});
-
+}
 
 var pageConnections = {}
 
@@ -42,34 +58,47 @@ var broadcast = function(msg) {
     }
 }
 
+
+var nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
+
+nativePort.onDisconnect.addListener(function(e) {
+    console.log("[SGActions] native disconnected", e);
+    broadcast({
+        src: 'background',
+        dst: 'page',
+        type: 'disconnect',
+    })
+    // TODO: reconnect
+});
+
+nativePort.onMessage.addListener(routeMessage)
+
+
+// We are all done setting up our connection to the native; say hello!
+routeMessage({
+    src: 'background',
+    dst: 'native',
+    type: 'hello',
+})
+
+
+
 chrome.runtime.onConnect.addListener(function (conn) {
 
-    // Hold onto this connection by tab ID, so that we can route replies
-    // back to it.
-    pageConnections[conn.sender.tab.id] = conn;
+    var tab_id = conn.sender.tab.id;
+    pageConnections[tab_id] = conn;
 
     conn.onDisconnect.addListener(function() {
-        delete pageConnections[conn.sender.tab.id];
+        console.log('[SGActions] connection to tab', tab_id, 'closed')
+        delete pageConnections[tab_id];
     })
 
     conn.onMessage.addListener(function (msg) {
-        console.log('[SGActions] message from', conn.sender.tab.id, msg)
-        if (msg.dst == 'native') {
-            msg.src = {
-                tab_id: conn.sender.tab.id,
-                next: msg.src
-            }
-            try {
-                nativePort.postMessage(msg)
-            } catch (e) {
-                conn.postMessage({
-                    src: 'native',
-                    dst: msg.src.next,
-                    type: 'error',
-                    error: e.toString()
-                })
-            }
+        msg.src = {
+            tab_id: tab_id,
+            next: msg.src
         }
+        routeMessage(msg)
     })
 
 })
