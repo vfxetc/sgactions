@@ -118,6 +118,14 @@ def install_native_messenger(native_dir, ext_path, native_origins):
 def main():   
 
     ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
+
+    # Normalize so the same path on OS X and Linux; in our environment lib and
+    # lib64 are symlinked together.
+    if '/lib64/' in ext_path:
+        ext_path2 = ext_path.replace('/lib64/', '/lib')
+        if os.path.exists(ext_path2):
+            ext_path = ext_path2
+
     ext_paths = set((ext_path, os.path.realpath(ext_path)))
 
     print 'installing Chrome extension:', ext_path
