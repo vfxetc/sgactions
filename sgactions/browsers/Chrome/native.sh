@@ -16,11 +16,7 @@ export SGACTIONS_EXT_ID="$1"
 # code being called.
 export PYTHONPATH="$(dirname $0)/../../..:$PYTHONPATH"
 
-# Run within the application bundle on OS X so that notifications are
-# easier to deal with.
-app_bundle="/usr/local/vee/Applications/SGActions.app/Contents/MacOS/SGActions"
-if [[ -e "$app_bundle" ]]; then
-    exec "$app_bundle" --chrome-native
-else
-    exec python -m sgactions.browsers.chrome_native
-fi
+# We could use the app at /usr/local/vee/Applications/SGActions.app, but
+# then it would always be the in dock. Instead, notifications may get a
+# little messier.
+exec python -m sgactions.browsers.chrome_native
