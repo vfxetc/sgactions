@@ -1,11 +1,12 @@
 """Register the protocol handler on various OSes."""
 
 from subprocess import call, Popen, PIPE
-import os
-import sys
-import re
-import json
+import argparse
 import hashlib
+import json
+import os
+import re
+import sys
 
 
 sgactions_root = os.path.abspath(os.path.join(__file__, '..', '..'))
@@ -21,7 +22,7 @@ def google_hash(text):
     return ''.join(_google_hash_map[x] for x in digest)
 
 
-def install_chrome_extension(profile_dir, ext_path):
+def install_chrome_extension(profile_dir, ext_path, force=False):
 
     if not os.path.exists(profile_dir):
         return
@@ -37,6 +38,8 @@ def install_chrome_extension(profile_dir, ext_path):
 
     # Remove all old extensions.
     for k, v in prefs['extensions']['settings'].items():
+        if not isinstance(v, dict):
+            continue
         if ext_rel_path in v.get('path', ''):
             if k == ext_id:
                 print '\t\talready installed'
@@ -46,24 +49,48 @@ def install_chrome_extension(profile_dir, ext_path):
                 prefs_changed = True
     
     # Install the extension.
-    if ext_id not in prefs['extensions']['settings']:
+    if force or ext_id not in prefs['extensions']['settings']:
         print '\t\tInstalling', ext_path
         prefs['extensions']['settings'][ext_id] = {
-           "active_permissions": {
-              "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
-           },
-           "events": [ "runtime.onInstalled" ],
-           "from_bookmark": False,
-           "from_webstore": False,
-           "granted_permissions": {
-              "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
-           },
-           "install_time": "12992636740554400",
-           "location": 4,
-           "newAllowFileAccess": True,
-           "path": ext_path,
-           "state": 1
+            "active_permissions": {
+               "api": [ "nativeMessaging" ],
+               "manifest_permissions": [  ],
+               "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+            },
+            "commands": {
+
+            },
+            "content_settings": [  ],
+            "creation_flags": 38,
+            "events": [  ],
+            "from_bookmark": False,
+            "from_webstore": False,
+            "granted_permissions": {
+               "api": [ "nativeMessaging" ],
+               "manifest_permissions": [  ],
+               "scriptable_host": [ "https://*.shotgunstudio.com/*" ]
+            },
+            "incognito_content_settings": [  ],
+            "incognito_preferences": {
+
+            },
+            "initial_keybindings_set": True,
+            "install_time": "13078453141574979",
+            "location": 4,
+            "newAllowFileAccess": True,
+            "path": ext_path,
+            "preferences": {
+
+            },
+            "regular_only_preferences": {
+
+            },
+            "state": 1,
+            "was_installed_by_default": False,
+            "was_installed_by_oem": False
         }
+
+
         prefs_changed = True
     
     if prefs_changed:
@@ -114,6 +141,10 @@ def install_native_messenger(native_dir, ext_path, native_origins):
 
 def main():   
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--force', action='store_true')
+    args = parser.parse_args()
+
     ext_path = os.path.abspath(os.path.join(__file__, '..', 'browsers', 'Chrome'))
 
     # Normalize so the same path on OS X and Linux; in our environment lib and
@@ -132,7 +163,7 @@ def main():
         '~/.config/google-chrome'
     )]
     for profile_dir in profile_dirs:
-        install_chrome_extension(profile_dir, ext_path)
+        install_chrome_extension(profile_dir, ext_path, force=args.force)
 
     native_dirs = [os.path.join(profile_dir, 'NativeMessagingHosts') for profile_dir in profile_dirs]
     native_dirs.extend((
