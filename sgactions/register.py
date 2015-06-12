@@ -24,11 +24,12 @@ def google_hash(text):
 
 def install_chrome_extension(profile_dir, ext_path, force=False):
 
-    if not os.path.exists(profile_dir):
+    prefs_path = os.path.join(profile_dir, 'Default', 'Preferences')
+    
+    if not os.path.exists(prefs_path):
         return
     print '\t' + profile_dir
-
-    prefs_path = os.path.join(profile_dir, 'Default', 'Preferences')
+    
     prefs = json.load(open(prefs_path))
     
     prefs_changed = False
