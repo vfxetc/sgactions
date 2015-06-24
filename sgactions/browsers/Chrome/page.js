@@ -184,6 +184,16 @@ if (window.SGActions != undefined) {
 
     var evaluate_filter = function(filter, entity) {
 
+        // recurse for more complicated filters
+        if (typeof filter[0] != "string") {
+            for (var i = 0; i < filter.length; i++) {
+                if (!evaluate_filter(filter[i], entity)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         var attrs = filter[0].split('.')
         var head = entity;
         try {
