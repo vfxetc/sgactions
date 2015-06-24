@@ -196,13 +196,31 @@ if (window.SGActions != undefined) {
         }
 
         switch (filter[1]) {
-            case 'is':
+
+            case 'is': // in Shotgun
             case 'eq':
             case '==':
                 return head == filter[2];
-                break;
+
+            case 'is_not': // in Shotgun
+            case 'not_eq':
+            case '!=':
+                return head != filter[2];
+
+            case 'starts_with': // in Shotgun
+                return filter[2].indexOf(head) == 0;
+
+            case 'contains': // in Shotgun
+            case 'in':
+                return filter[2].indexOf(head) != -1;
+
+            case 'not_contains': // in Shotgun
+            case 'not_in':
+                return filter[2].indexOf(head) == -1;
+
             default:
                 throw "unknown operator: " + filter[1];
+
         }
 
     }
@@ -215,7 +233,15 @@ if (window.SGActions != undefined) {
             total: 0
         }
         for (var i = 0; i < entities.length; i++) {
-            var res = evaluate_filter(filter, entities[i]);
+
+            var res;
+            try {
+                res = evaluate_filter(filter, entities[i]);
+            } catch (e) {
+                console.log('error during evaluate_filter', filter, entities[i], e);
+                res = undefined;
+            }
+
             if (res == undefined) {
                 totals.unknown += 1
             } else {
