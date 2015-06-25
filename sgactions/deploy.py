@@ -17,6 +17,7 @@ def main():
     optparser.add_option('-n', '--dry-run', action="store_true", dest="dry_run")
     optparser.add_option('-l', '--list', action="store_true", dest="list")
     optparser.add_option('-d', '--delete', action="store_true", dest="delete")    
+    optparser.add_option('-f', '--force', action="store_true", dest="force")    
     opts, args = optparser.parse_args()
     
     sg = get_shotgun()
@@ -151,7 +152,7 @@ def main():
             else:
                 id_ = old_data.pop('id')
                 del old_data['type']
-                if new_data != old_data:
+                if new_data != old_data or opts.force:
                     print 'Update %s / %s' % (url_or_entrypoint, entity_type)
                     if not opts.dry_run:
                         sg.update('ActionMenuItem', id_, new_data)
