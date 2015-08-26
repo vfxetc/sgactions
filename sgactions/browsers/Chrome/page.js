@@ -9,14 +9,58 @@ if (window.SGActions != undefined) {
     console.log('[SGActions] loaded')
 
     SGActions = {
+
         nativeCapabilities: {},
         postNative: function(msg) {
             msg.src = 'page';
             msg.dst = 'native';
             window.postMessage({sgactions: msg}, '*')
         },
-        progressDialog: null
+
+        alert: function(msg) {
+            try {
+                var dialog = new SG.AlertDialog({
+                    title: msg.title || 'SGActions',
+                    body: (msg.message || 'Alert!').replace(/\n/g, '<br>'),
+                    action: {extra_cls: 'blue_button'},
+                    width: '800px',
+                }, {})
+                dialog.present();            
+            } catch (e) {
+                if (msg.message) {
+                    alert(msg.message)
+                }
+                console.log('[SGActions]', e, 'during alert', msg);
+                console.traceback();
+            }
+        },
+
+        notificationWithDetails: null,
+        showNotificationDetails: function() {
+            if (SGActions.notificationWithDetails) {
+
+                // Clear out notifications.
+                if (SG.Message.message_type.indexOf('sgactions') === 0) {
+                    SG.Message.hide();
+                }
+
+                SGActions.alert({
+                    title: SGActions.notificationWithDetails.message,
+                    message: SGActions.notificationWithDetails.details
+                });
+                SGActions.notificationWithDetails = null
+            }
+        },
+
+        hideProgress: function() {
+            if (SG.Message.message_type == 'sgactions_progress') {
+                SG.Message.hide();
+            }
+        }
+
+
     }
+
 
     window.addEventListener("message", function(e) {
 
@@ -27,66 +71,51 @@ if (window.SGActions != undefined) {
         var msg = e.data.sgactions;
 
         switch(msg.type) {
+
             case 'hello':
                 console.log('[SGActions] native capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
                 break;
+
             case 'error':
                 console.log('[SGActions] native error:', msg['error']);
                 break;
+
             case 'disconnect':
                 console.log('[SGActions] native disconnected');
                 SGActions.nativeCapabilities = {};
                 break;
+
             case 'result':
-                if (SGActions.progressDialog) {
-                    SGActions.progressDialog.hide();
-                    SGActions.progressDialog = null
-                }
+                // We don't actually do anything with these.
                 console.log('[SGActions] action result:', msg['result']);
                 break
+
+            case 'notify':
             case 'progress':
                 try {
-                    var dialog = SGActions.progressDialog = SGActions.progressDialog || new SG.AlertDialog({
-                        action: {
-                            label: 'Cancel',
-                            extra_cls: 'red_button',
-                            callback: {fn: function() {
-                                if (SGActions.progressDialog) {
-                                    SGActions.progressDialog.hide()
-                                    SGActions.progressDialog = null
-                                    SGActions.postNative({type: 'progress_cancelled'})
-                                }
-                            }}
-                        }
-                    }, {})
-                    dialog.title = msg.title || 'SGActions Progress'
-                    dialog.body  = (msg.message || 'Alert!').replace(/\n/g, '<br>')
-                    dialog.present();
+                    var html = msg.message || ''
+                    if (msg.details) {
+                        SGActions.notificationWithDetails = msg
+                        html += ' <a href="javascript:SGActions.showNotificationDetails()">Details</a>'
+                    }
+                    SG.Message.show({
+                        html: html,
+                        close_x: true,
+                        message_type: 'sgactions_' + msg.type
+                    })
                 } catch (e) {
-                    console.log('[SGActions] error during progress:', e);
+                    if (msg.message) {
+                        alert(msg.message)
+                    }
+                    console.log('[SGActions]', e, 'during ' + msg.type, msg);
                     console.traceback();
                 }
                 break
 
             case 'alert':
-                if (SGActions.progressDialog) {
-                    SGActions.progressDialog.hide();
-                    SGActions.progressDialog = null
-                }
-                try {
-                    var dialog = new SG.AlertDialog({
-                        title: msg.title || 'SGActions',
-                        body: (msg.message || 'Alert!').replace(/\n/g, '<br>'),
-                        action: {extra_cls: 'blue_button'},
-                        width: '800px',
-                    }, {})
-                    dialog.present();
-                } catch (e) {
-                    alert(msg.message)
-                    console.log('[SGActions] error during alert:', e);
-                    console.traceback();
-                }
+                SGActions.hideProgress()
+                SGActions.alert(msg)
                 break;
 
             default:

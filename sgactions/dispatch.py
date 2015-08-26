@@ -60,10 +60,9 @@ def dispatch(url, reload=False):
             )
             return e
         except Exception, e2:
-            utils.notify(
+            utils.alert(
                 title='SGAction Fatal Error',
                 message='Error while handling error:\n%r from %r\n---\n%s' % (e2, e, traceback.format_exc()),
-                sticky=True,
             )
             return e2
 

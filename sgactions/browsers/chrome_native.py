@@ -7,6 +7,7 @@ import subprocess
 import sys
 import traceback
 import os
+from warnings import warn
 
 if __name__ == '__main__':
     sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
@@ -117,10 +118,19 @@ def alert(message, title=None):
         raise RuntimeError('no current native handler')
 
 def progress(message, title=None):
+    if title is not None:
+        warn('sgactions.browsers.chrome_native.progress title is deprecated')
     if _current_source:
-        send(dst=_current_source, type='progress', title=title, message=message)
+        send(dst=_current_source, type='progress', message=message)
     else:
         raise RuntimeError('no current native handler')
+
+def notify(message, details=None):
+    if _current_source:
+        send(dst=_current_source, type='notify', message=message, details=details)
+    else:
+        raise RuntimeError('no current native handler')
+
 
 @handler('progress_cancelled')
 def on_progress_cancelled(**msg):
