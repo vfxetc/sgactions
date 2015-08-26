@@ -111,24 +111,24 @@ def main():
 
 
 # For runtime!
-def alert(message, title=None):
+def alert(message, title=None, strict=False):
     if _current_source:
         send(dst=_current_source, type='alert', title=title, message=message)
-    else:
+    elif strict:
         raise RuntimeError('no current native handler')
 
-def progress(message, title=None):
+def progress(message, title=None, strict=False):
     if title is not None:
         warn('sgactions.browsers.chrome_native.progress title is deprecated')
     if _current_source:
         send(dst=_current_source, type='progress', message=message)
-    else:
+    elif strict:
         raise RuntimeError('no current native handler')
 
-def notify(message, details=None):
+def notify(message, details=None, strict=False):
     if _current_source:
         send(dst=_current_source, type='notify', message=message, details=details)
-    else:
+    elif strict:
         raise RuntimeError('no current native handler')
 
 
@@ -137,7 +137,7 @@ def on_progress_cancelled(**msg):
     progress_cancelled(True)
 
 _progress_cancelled = None
-def progress_cancelled(value=None):
+def progress_cancelled(value=None, strict=False):
     global _progress_cancelled
     if value is not None:
         _progress_cancelled = value
