@@ -46,24 +46,34 @@ def dispatch(url, reload=False):
         return func(**kwargs)
     
     except Exception, e:
+
+        # Default value in case there is an error in traceback.format_exc()...
+        tb = 'ERROR DURING TRACEBACK'
+
         try:
+            tb = traceback.format_exc()
+
             ticket_id = tickets.get_ticket_for_exception(*sys.exc_info())
             tickets.reply_to_ticket(ticket_id, [
                 ('Exception', sys.exc_info()),
                 ('SGAction Kwargs', kwargs or url),
                 ('OS Environment', dict(os.environ)),
             ], user_id=kwargs.get('user_id'))
-            utils.notify(
-                title='SGAction Error',
-                message='%s: %s\nReplied to Ticket %d.' % (type(e).__name__, e, ticket_id),
-                sticky=True,
-            )
-            return e
-        except Exception, e2:
+
             utils.alert(
-                title='SGAction Fatal Error',
-                message='Error while handling error:\n%r from %r\n---\n%s' % (e2, e, traceback.format_exc()),
+                title='Unhandled %s' % type(e).__name__,
+                message='<pre>%s</pre>\n\nReplied to Ticket %d.' % (tb, ticket_id),
             )
+
+            return e
+
+        except Exception, e2:
+
+            utils.alert(
+                title='Fatal Unhandled %s' % type(e2).__name__,
+                message='<pre>%s</pre>\n\nDuring handling of the above exception, another exception occurred:\n\n<pre>%s</pre>' % (tb, traceback.format_exc()),
+            )
+
             return e2
 
 

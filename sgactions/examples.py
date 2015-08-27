@@ -1,21 +1,20 @@
+import json
 import os
 
 from . import utils
 
 
 def dump_kwargs(**kwargs):
-    utils.notify(
+    utils.alert(
         title='%s Kwargs' % kwargs.get('entity_type', 'Unknown'),
-        message='\n'.join('%s = %r' % x for x in sorted(kwargs.iteritems())),
-        sticky=True,
+        message='<pre>%s</pre>' % json.dumps(kwargs, sort_keys=True, indent=4)
     )
 
 
 def dump_environ(**kwargs):
-    utils.notify(
+    utils.alert(
         title='%s Environ' % kwargs.get('entity_type', 'Unknown'),
-        message='\n'.join('%s = %r' % x for x in sorted(os.environ.iteritems())),
-        sticky=True,
+        message='<pre>%s</pre>' % '\n'.join('%s=%s' % x for x in sorted(os.environ.iteritems())),
     )
 
 
