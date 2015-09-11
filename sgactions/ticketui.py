@@ -117,7 +117,7 @@ class Dialog(QtGui.QDialog):
             exc_info = exc_info or (None, None, None)
             title = str(self._title.text())
         ticket_id = tickets.get_ticket_for_exception(*exc_info, title=title)
-        tickets.reply_to_ticket(ticket_id, data, user_id=tickets.guess_user_id())
+        tickets.reply_to_ticket(ticket_id, data)
         if self._screenshot_path:
             tickets.attach_to_ticket(ticket_id, self._screenshot_path)
         self.close()

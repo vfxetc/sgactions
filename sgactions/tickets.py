@@ -1,9 +1,12 @@
+import datetime
 import hashlib
 import os
-import traceback
 import re
-import types
+import sys
+import tempfile
 import textwrap
+import traceback
+import types
 
 from .utils import get_shotgun
 
@@ -101,6 +104,9 @@ def reply_to_ticket(ticket_id, content, user_id=None):
     
     """
     
+    user_comment = None
+    exc_type = None
+
     if isinstance(content, dict):
         content = sorted(content.iteritems())
 
@@ -108,6 +114,10 @@ def reply_to_ticket(ticket_id, content, user_id=None):
         parts = []
         for heading, part in content:
             
+            # This one gets special cased into a Reply.
+            if heading.lower() == 'user comment':
+                user_comment = part
+
             # Mappings.
             if isinstance(part, dict):
                 parts.append((heading, '\n'.join('%s = %r' % x
@@ -123,6 +133,7 @@ def reply_to_ticket(ticket_id, content, user_id=None):
                     isinstance(part[1], Exception) and
                     isinstance(part[2], types.TracebackType)
                 ):
+                    exc_type = part[0]
                     parts.append((heading, '\n'.join(traceback.format_exception(*part)).rstrip()))
                 
                 # Iterators.
@@ -135,34 +146,61 @@ def reply_to_ticket(ticket_id, content, user_id=None):
         
         # Join the parts.
         content = '\n\n'.join('%s\n%s\n%s' % (heading, '=' * len(heading), part) for heading, part in parts)
-
-        # Line wrap (each line seperately).
-        line_width = 100
-        content = '\n'.join(textwrap.fill(line, line_width, break_long_words=False, replace_whitespace=False) for line in content.splitlines())
-
-        # Break up long words.
-        def break_long(m):
-            word = m.group(1)
-            return '\\\n'.join(word[i:i+line_width] for i in xrange(0, len(word), line_width))
-        content = re.sub(r'(\S{%d,})' % line_width, break_long, content)
-
-        # Don't mark it up.
-        content = 'bc..\n' + content
-    
-    # Create a reply to that ticket with the traceback.
-    reply = dict(content=content, entity=dict(type='Ticket', id=ticket_id))
-    if user_id:
-        reply['user'] = dict(type='HumanUser', id=user_id)
     
     # Get the Shotgun and Project.
     # TODO: Somehow pass this in later.
     shotgun = get_shotgun()
+
+    # Convert requested user ID to a login.
+    if user_id:
+        user = shotgun.find_one('HumanUser', [('id', 'is', user_id)], ['login'])
+        if user:
+            shotgun.config.sudo_as_login = user['login']
+
+    # Make sure we do have a login.
+    if not shotgun.config.sudo_as_login:
+        user = shotgun.find_one('HumanUser', [('email', 'starts_with', os.getlogin() + '@')], ['login'])
+        if user:
+            shotgun.config.sudo_as_login = user['login']
     
-    created = shotgun.create('Reply', reply)
-    return created['id'], content
+    reply = None
+
+    if user_comment:
+        reply = shotgun.create('Reply', {
+            'content': user_comment,
+            'entity': {'type': 'Ticket', 'id': ticket_id},
+        })
+
+    if content.strip():
+        with tempfile.NamedTemporaryFile(suffix='ticket-%d-reply.txt' % ticket_id) as fh:
+            fh.write(content)
+            fh.flush()
+            shotgun.upload('Ticket', ticket_id, fh.name, 'attachments',
+               display_name='Ticket-%d.%s.%s.txt' % (
+                    ticket_id,
+                    exc_type.__name__ if exc_type else 'details',
+                    datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                ),
+            )
+
+    return reply and reply['id'], content
 
 
 def attach_to_ticket(ticket_id, attachment):
     """Attach a file to a ticket."""
     shotgun = get_shotgun()
     shotgun.upload('Ticket', ticket_id, attachment, 'attachments')
+
+
+if __name__ == '__main__':
+
+    try:
+        raise ValueError('this is a test')
+    except:
+        ticket_id = get_ticket_for_exception(*sys.exc_info(), title='Testing Ticket Submittion')
+        print 'Ticket ID', ticket_id
+        reply_id, _ = reply_to_ticket(ticket_id, {
+            'User Comment': 'This is just a test',
+            'Exception': sys.exc_info(),
+        })
+        print 'Reply ID', reply_id
