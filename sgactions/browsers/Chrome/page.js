@@ -153,8 +153,20 @@ if (window.SGActions != undefined) {
 
     var get_selected_entities = function(entity_page) {
 
+        // SG.StreamDetailHeader is for just a single entity.
+        if (entity_page.entity) {
+            var entity = entity_page.entity;
+            var record = entity_page.entity_data[entity.type][entity.id].record;
+            var data = clone(record.row.data);
+            data.type = entity.type;
+            create_self_links(data);
+            console.log(data);
+            return [data];
+        }
+
+        // SG.Widget.EntityQuery.EntityQueryPage is the main grid layout.
         var selected_eids = entity_page.selected_entities;
-        if (selected_eids.length < 1) {
+        if (!selected_eids || selected_eids.length < 1) {
             return [];
         }
 
