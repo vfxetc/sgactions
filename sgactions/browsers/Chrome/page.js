@@ -17,10 +17,10 @@ if (window.SGActions != undefined) {
             window.postMessage({sgactions: msg}, '*')
         },
 
-        alert: function(msg) {
+        showAlert: function(msg) {
             
             SGActions.preemptScheduledMessages()
-            SGActions.hideMessage()
+            SGActions.hideProgress()
 
             try {
                 var dialog = new SG.AlertDialog({
@@ -39,21 +39,45 @@ if (window.SGActions != undefined) {
             }
         },
 
-        notificationWithDetails: null,
-        showNotificationDetails: function() {
-            if (SGActions.notificationWithDetails) {
+        showMessage: function(msg) {
 
-                // Clear out notifications.
-                if (SG.Message.message_type.indexOf('sgactions') === 0) {
-                    SG.Message.hide();
-                }
-
-                SGActions.alert({
-                    title: SGActions.notificationWithDetails.message,
-                    message: SGActions.notificationWithDetails.details
-                });
-                SGActions.notificationWithDetails = null
+            if (msg.message) {
+                msg.html = msg.message;
+                msg.message = undefined;
             }
+
+            if (msg.details) {
+                msg.title = msg.html
+                msg.html += ' <a href="javascript:SGActions.showMessageDetails()">Details</a>'
+            }
+
+            // Defaults.
+            if (msg.close_x === undefined) {
+                msg.close_x = true;
+            }
+            if (msg.type) {
+                msg.message_type = 'sgactions_' + msg.type
+            }
+            if (!msg.message_type) {
+                msg.message_type = 'sgactions_generic'
+            }
+
+            SG.Message.show(msg);
+
+        },
+
+        showMessageDetails: function() {
+            
+            var msg = SG.Message.last_config
+            if (!msg.details) {
+                return
+            }
+
+            SGActions.showAlert({
+                title: msg.title,
+                message: msg.details
+            });
+
         },
 
         // Defer showing a message for a brief period, only showing it if
@@ -71,7 +95,7 @@ if (window.SGActions != undefined) {
 
             setTimeout(function() {
                 if (SG.Message.last_config._scheduleCounter == counter) {
-                    SG.Message.show(msg);
+                    SGActions.showMessage(msg)
                 }
             }, timeout || 1000)
 
@@ -115,7 +139,19 @@ if (window.SGActions != undefined) {
             case 'hello':
                 console.log('[SGActions] native connect with capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
-                SGActions.hideMessage('sgactions_disconnect')
+
+                // Notify them if this is a reconnect.
+                if (SGActions._didDisconnect) {
+                    SGActions.showMessage({
+                        html: 'Western Post plugin reconnected.',
+                        type: 'connected',
+                    })
+                    // Hide it in 2s.
+                    setTimeout(function() {
+                        SGActions.hideMessage('sgactions_connected')
+                    }, 2000)
+                }
+
                 break;
 
             case 'error':
@@ -128,16 +164,18 @@ if (window.SGActions != undefined) {
 
                 // Forget that we can do anything until told otherwise.
                 SGActions.nativeCapabilities = {};
-
+                SGActions._didDisconnect = true;
                 if (msg.src == 'main') {
-                    SG.Message.show({
+                    SGActions.showMessage({
                         html: 'Western Post plugin crashed; please refresh Shotgun.',
-                        message_type: 'sgactions_crashed'
+                        type: 'crashed',
+                        close_x: false
                     })
                 } else {
-                    SG.Message.show({
+                    SGActions.showMessage({
                         html: 'Western Post plugin disconnected; reconnecting...',
-                        message_type: 'sgactions_disconnect'
+                        type: 'disconnect',
+                        close_x: false
                     })
                 }
 
@@ -151,29 +189,11 @@ if (window.SGActions != undefined) {
 
             case 'notify':
             case 'progress':
-                try {
-                    var html = msg.message || ''
-                    if (msg.details) {
-                        SGActions.notificationWithDetails = msg
-                        html += ' <a href="javascript:SGActions.showNotificationDetails()">Details</a>'
-                    }
-                    SG.Message.show({
-                        html: html,
-                        close_x: true,
-                        message_type: 'sgactions_' + msg.type
-                    })
-                } catch (e) {
-                    if (msg.message) {
-                        alert(msg.message)
-                    }
-                    console.log('[SGActions]', e, 'during ' + msg.type, msg);
-                    console.traceback();
-                }
+                SGActions.showMessage(msg)
                 break
 
             case 'alert':
-                SGActions.hideProgress()
-                SGActions.alert(msg)
+                SGActions.showAlert(msg)
                 break;
 
             default:
@@ -515,7 +535,7 @@ if (window.SGActions != undefined) {
                 SGActions.scheduleMessage({
                     html: 'Running ' + action_url.substr(9),
                     close_x: true,
-                    message_type: 'sgactions_dispatch'
+                    type: 'dispatch'
                 })
 
             } catch (e) {
@@ -563,7 +583,7 @@ if (window.SGActions != undefined) {
                 SGActions.scheduleMessage({
                     html: 'Running ' + base_url.substr(9),
                     close_x: true,
-                    message_type: 'sgactions_dispatch'
+                    type: 'dispatch'
                 })
 
             } catch(err) {
