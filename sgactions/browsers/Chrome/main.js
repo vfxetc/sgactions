@@ -1,15 +1,32 @@
 
 
-var port = chrome.runtime.connect();
+var port;
 
-port.onMessage.addListener(function(msg) {
+var routeMessage = function(msg) {
     if (msg.dst == 'page') {
         window.postMessage({sgactions: msg}, '*');
     } else {
-        console.log('[SGActions] main cannot route from background:', msg);
+        console.log('[SGActions] main cannot route message:', msg);
     }
-})
+}
 
+var onDisconnect = function(event) {
+    console.log('[SGActions] background disconnected')
+    port = null
+    routeMessage({
+        src: 'main',
+        dst: 'page',
+        type: 'disconnect'
+    })
+}
+
+var connect = function() {
+    console.log('[SGActions] connecting to background')
+    port = chrome.runtime.connect();
+    port.onMessage.addListener(routeMessage);
+    port.onDisconnect.addListener(onDisconnect);
+}
+connect();
 
 window.addEventListener("message", function(e) {
     

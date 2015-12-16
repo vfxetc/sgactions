@@ -75,6 +75,7 @@ if (window.SGActions != undefined) {
             case 'hello':
                 console.log('[SGActions] native connect with capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
+                SGActions.hideMessage('sgactions_disconnect')
                 break;
 
             case 'error':
@@ -82,9 +83,24 @@ if (window.SGActions != undefined) {
                 break;
 
             case 'disconnect':
-                console.log('[SGActions] native disconnected');
-                // Forget that it can do anything.
+
+                console.log('[SGActions]', msg.src, 'disconnected');
+
+                // Forget that we can do anything until told otherwise.
                 SGActions.nativeCapabilities = {};
+
+                if (msg.src == 'main') {
+                    SG.Message.show({
+                        html: 'Western Post plugin crashed; please refresh Shotgun.',
+                        message_type: 'sgactions_crashed'
+                    })
+                } else {
+                    SG.Message.show({
+                        html: 'Western Post plugin disconnected; reconnecting...',
+                        message_type: 'sgactions_disconnect'
+                    })
+                }
+
                 break;
 
             case 'result':
