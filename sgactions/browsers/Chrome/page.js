@@ -18,6 +18,10 @@ if (window.SGActions != undefined) {
         },
 
         alert: function(msg) {
+            
+            SGActions.preemptScheduledMessages()
+            SGActions.hideMessage()
+
             try {
                 var dialog = new SG.AlertDialog({
                     title: msg.title || 'SGActions',
@@ -52,10 +56,46 @@ if (window.SGActions != undefined) {
             }
         },
 
-        hideProgress: function() {
-            if (SG.Message.message_type == 'sgactions_progress') {
-                SG.Message.hide();
+        // Defer showing a message for a brief period, only showing it if
+        // no other messages were shown.
+        scheduleMessage: function(msg, timeout) {
+
+            var counter = ++SGActions._scheduleCounter
+
+            // We are assuming that we can mutate the last_config without
+            // Shotgun noticing and/or caring.
+            if (!SG.Message.last_config) {
+                SG.Message.last_config = {}
             }
+            SG.Message.last_config._scheduleCounter = counter
+
+            setTimeout(function() {
+                if (SG.Message.last_config._scheduleCounter == counter) {
+                    SG.Message.show(msg);
+                }
+            }, timeout || 1000)
+
+        },
+        _scheduleCounter: 0,
+
+        preemptScheduledMessages: function() {
+            if (!SG.Message.last_config) {
+                SG.Message.last_config = {}
+            }
+            SG.Message.last_config._scheduleCounter = undefined;
+        },
+
+        // Hide any messages, optionally of the given type.
+        hideMessage: function(type) {
+            // Need to look for SG.Message since the "hello" may arrive
+            // before Shotgun is done loading.
+            if (SG.Message && (!type || type == SG.Message.message_type)) {
+                SG.Message.hide()
+            }
+        },
+
+        hideProgress: function() {
+            SGActions.hideMessage('sgactions_progress')
         }
 
 
@@ -64,7 +104,7 @@ if (window.SGActions != undefined) {
 
     window.addEventListener("message", function(e) {
 
-        if (e.source != window) return; // Must be from this page.
+        if (e.source != window) return; // Must be from this window (i.e. main or page).
         if (!e.data.sgactions) return; // Must be sgactions.
         if (e.data.sgactions.dst != 'page') return; // Must be sent to us.
 
@@ -104,8 +144,9 @@ if (window.SGActions != undefined) {
                 break;
 
             case 'result':
-                // We don't actually do anything with these.
+                // We don't do anything with these except hide the "running" notifications.
                 console.log('[SGActions] action result:', msg['result']);
+                SGActions.hideMessage('sgactions_dispatch')
                 break
 
             case 'notify':
@@ -471,6 +512,12 @@ if (window.SGActions != undefined) {
                     SG.Repo.request_news()
                 }
 
+                SGActions.scheduleMessage({
+                    html: 'Running ' + action_url.substr(9),
+                    close_x: true,
+                    message_type: 'sgactions_dispatch'
+                })
+
             } catch (e) {
                 console.log('[SGActions] error in on_custom_external_action:', err);
                 return original_action.apply(this, arguments);
@@ -512,6 +559,12 @@ if (window.SGActions != undefined) {
                 if (poll_for_data_updates) {
                     SG.Repo.request_news()
                 }
+
+                SGActions.scheduleMessage({
+                    html: 'Running ' + base_url.substr(9),
+                    close_x: true,
+                    message_type: 'sgactions_dispatch'
+                })
 
             } catch(err) {
 
