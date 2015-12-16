@@ -11,17 +11,12 @@ var routeMessage = function(msg) {
 
     var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
     var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
-    console.log("[SGActions] message from", src, 'to', dst, msg);
+    console.log("[SGActions] routing", msg.type, "from", src, "to", dst, msg);
 
-    if (msg.dst == 'background') {
-
-        if (msg.src == 'native' && msg.type == 'hello') {
-            msg.src = 'background'
-            msg.dst = 'page'
-            broadcast(msg);
-        } else {
-            // Let others die.
-        }
+    if (msg.dst == 'background' && msg.src == 'native' && msg.type == 'hello') {
+        msg.src = 'background'
+        msg.dst = 'page'
+        broadcast(msg);
 
     } else if (msg.dst == 'native') {
         try {
@@ -32,7 +27,7 @@ var routeMessage = function(msg) {
             // already sent us a message (potentially a dispatch), and we
             // were unable to send it. We could try to connect and try again,
             // or bounce it back to them.
-            
+
             console.log("[SGActions] native errored:", e);
 
             broadcast({
@@ -55,7 +50,7 @@ var routeMessage = function(msg) {
         }
 
     } else {
-        console.log("[SGActions] bad destination:", msg.dst, dst);
+        console.log("[SGActions] background cannot route:", msg);
 
     }
 
@@ -73,9 +68,9 @@ var broadcast = function(msg) {
 }
 
 
-var onDisconnect = function(e) {
+var onDisconnect = function(thisId, event) {
 
-    console.log("[SGActions] native disconnected");
+    console.log("[SGActions] native", thisId, "disconnected");
 
     // Let everyone know it is down.
     broadcast({
@@ -84,17 +79,29 @@ var onDisconnect = function(e) {
         type: 'disconnect',
     })
 
-    // Attempt an immediate reconnect.
-    connect()
+    if (thisId == lastNativeId) {
+        // Attempt an immediate reconnect.
+        console.log("[SGActions] reconnecting...")
+        connect()
+    } else {
+        console.log("[SGActions] skipping automatic reconnect as", thisId, '!=', lastNativeId)
+    }
 
 }
 
 
 var nativePort = null;
+var lastNativeId = 0;
+
 var connect = function() {
 
+    var thisId = lastNativeId + 1
+    lastNativeId = thisId
+
+    console.log('[SGActions] starting native connection', thisId);
+
     nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
-    nativePort.onDisconnect.addListener(onDisconnect);
+    nativePort.onDisconnect.addListener(onDisconnect.bind(nativePort, thisId));
     nativePort.onMessage.addListener(routeMessage);
 
     // We will forward this to everyone when we get it back so that they
