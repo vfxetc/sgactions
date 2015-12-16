@@ -20,9 +20,14 @@
     title: "Raise Error [bug]"
     list_order: 94
 -
+    entrypoint: sgactions.examples:disconnect
+    folder: Development / Testing [cog]
+    title: "Disconnect Extension [cross]"
+    list_order: 95
+-
     entrypoint: sgactions.examples:publish_is_geocache
     title: "Development / Is Geocache? [brick]"
-    list_order: 95
+    list_order: 96
     entity_types:
         - PublishEvent
     rich:

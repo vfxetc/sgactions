@@ -111,6 +111,10 @@ def main():
 
 
 # For runtime!
+
+def is_native():
+    return bool(_current_source)
+
 def alert(message, title=None, strict=False):
     if _current_source:
         send(dst=_current_source, type='alert', title=title, message=message)

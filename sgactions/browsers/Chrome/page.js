@@ -73,7 +73,7 @@ if (window.SGActions != undefined) {
         switch(msg.type) {
 
             case 'hello':
-                console.log('[SGActions] native capabilities:', msg.capabilities);
+                console.log('[SGActions] native connect with capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
                 break;
 
@@ -83,6 +83,7 @@ if (window.SGActions != undefined) {
 
             case 'disconnect':
                 console.log('[SGActions] native disconnected');
+                // Forget that it can do anything.
                 SGActions.nativeCapabilities = {};
                 break;
 

@@ -14,13 +14,27 @@ var routeMessage = function(msg) {
     console.log("[SGActions] message from", src, 'to', dst, msg);
 
     if (msg.dst == 'background') {
-        // let it die here
+
+        if (msg.src == 'native' && msg.type == 'hello') {
+            msg.src = 'background'
+            msg.dst = 'page'
+            broadcast(msg);
+        } else {
+            // Let others die.
+        }
 
     } else if (msg.dst == 'native') {
         try {
             nativePort.postMessage(msg)
         } catch (e) {
+
+            // This is a bit of an awkward situation, because they have
+            // already sent us a message (potentially a dispatch), and we
+            // were unable to send it. We could try to connect and try again,
+            // or bounce it back to them.
+            
             console.log("[SGActions] native errored:", e);
+
             broadcast({
                 src: 'background',
                 dst: 'page',
@@ -59,27 +73,44 @@ var broadcast = function(msg) {
 }
 
 
-var nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
+var onDisconnect = function(e) {
 
-nativePort.onDisconnect.addListener(function(e) {
-    console.log("[SGActions] native disconnected", e);
+    console.log("[SGActions] native disconnected");
+
+    // Let everyone know it is down.
     broadcast({
         src: 'background',
         dst: 'page',
         type: 'disconnect',
     })
-    // TODO: reconnect
-});
 
-nativePort.onMessage.addListener(routeMessage)
+    // Attempt an immediate reconnect.
+    connect()
+
+}
 
 
-// We are all done setting up our connection to the native; say hello!
-routeMessage({
-    src: 'background',
-    dst: 'native',
-    type: 'hello',
-})
+var nativePort = null;
+var connect = function() {
+
+    nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
+    nativePort.onDisconnect.addListener(onDisconnect);
+    nativePort.onMessage.addListener(routeMessage);
+
+    // We will forward this to everyone when we get it back so that they
+    // know the system is (back) up.
+    routeMessage({
+        src: 'background',
+        dst: 'native',
+        type: 'hello',
+    })
+
+}
+connect()
+
+
+
+
 
 
 
@@ -93,6 +124,7 @@ chrome.runtime.onConnect.addListener(function (conn) {
         delete pageConnections[tab_id];
     })
 
+    // Connect this to the router.
     conn.onMessage.addListener(function (msg) {
         msg.src = {
             tab_id: tab_id,

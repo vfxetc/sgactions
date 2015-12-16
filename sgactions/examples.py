@@ -2,6 +2,7 @@ import json
 import os
 
 from . import utils
+from .browsers.chrome_native import is_native
 
 
 def dump_kwargs(**kwargs):
@@ -20,3 +21,10 @@ def dump_environ(**kwargs):
 
 def raise_error(**kwargs):
     raise ValueError('This is a test')
+
+def disconnect(**kwargs):
+    if is_native():
+        exit(0)
+    else:
+        utils.alert(message='Not the native messenger.')
+
