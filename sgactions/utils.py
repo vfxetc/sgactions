@@ -26,7 +26,6 @@ def notify(message, title=None, sticky=None, details=None, strict=False):
         from uitools.notifications import Notification
         Notification(title or 'SGActions', message).send()
 
-
 def alert(message, title=None, strict=False):
     title = title or 'SGActions'
     try:
@@ -35,7 +34,6 @@ def alert(message, title=None, strict=False):
     except RuntimeError:
         from uitools.notifications import Notification
         Notification(title, message).send()
-
 
 def progress(message, title=None, strict=False):
     
@@ -47,14 +45,16 @@ def progress(message, title=None, strict=False):
     except RuntimeError:
         pass
 
-
-
 def progress_cancelled(strict=False):
     try:
         from .browsers.chrome_native import progress_cancelled
         return progress_cancelled(strict=strict)
     except RuntimeError:
         pass
+
+def confirm(*args, **kwargs):
+    from .browsers.chrome_native import confirm
+    return confirm(*args, **kwargs)
 
 
 def get_shotgun(*args, **kwargs):

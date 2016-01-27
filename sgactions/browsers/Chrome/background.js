@@ -13,7 +13,9 @@ var routeMessage = function(msg) {
     var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
     console.log("[SGActions] routing", msg.type, "from", src, "to", dst, msg);
 
-    if (msg.dst == 'background' && msg.src == 'native' && msg.type == 'hello') {
+    // Forward the reconnection "hello" response to all open pages so they
+    // know the connection is back up.
+    if (msg.dst == 'background' && msg.src == 'native' && msg.type == 'elloh') {
         msg.src = 'background'
         msg.dst = 'page'
         broadcast(msg);
@@ -68,6 +70,8 @@ var broadcast = function(msg) {
 }
 
 
+var connectDelay = 0;
+
 var onDisconnect = function(thisId, event) {
 
     console.log("[SGActions] native", thisId, "disconnected");
@@ -82,7 +86,8 @@ var onDisconnect = function(thisId, event) {
     if (thisId == lastNativeId) {
         // Attempt an immediate reconnect.
         console.log("[SGActions] reconnecting...")
-        connect()
+        setTimeout(connect, connectDelay);
+        connectDelay = Math.min(5000, connectDelay * 2 || 100);
     } else {
         console.log("[SGActions] skipping automatic reconnect as", thisId, '!=', lastNativeId)
     }
@@ -97,6 +102,8 @@ var connect = function() {
 
     var thisId = lastNativeId + 1
     lastNativeId = thisId
+
+    connectDelay = 0 // It was successful, so next time try immediately.
 
     console.log('[SGActions] starting native connection', thisId);
 

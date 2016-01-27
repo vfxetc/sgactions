@@ -25,6 +25,11 @@
     title: "Disconnect Extension [cross]"
     list_order: 95
 -
+    entrypoint: sgactions.examples:prompt_confirm
+    folder: Development / Testing [cog]
+    title: "Confirm [thumb_up]"
+    list_order: 95
+-
     entrypoint: sgactions.examples:publish_is_geocache
     title: "Development / Is Geocache? [brick]"
     list_order: 96

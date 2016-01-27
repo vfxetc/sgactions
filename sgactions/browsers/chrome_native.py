@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
+from warnings import warn
 import functools
 import json
+import os
 import struct
 import subprocess
 import sys
+import threading
 import traceback
-import os
-from warnings import warn
+from Queue import Queue
 
 if __name__ == '__main__':
     sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
@@ -17,8 +19,11 @@ def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
+_active_threads = {}
+_capabilities = {}
 _current_source = None
 _handlers = {}
+_confirm_queues = {}
 
 def handler(func, name=None):
     if isinstance(func, basestring):
@@ -46,10 +51,25 @@ def reply_exception(orig, e):
     reply(orig, **format_exception(e))
 
 
+def start_thread(target, args=None, kwargs=None, **other):
+    thread = threading.Thread(target=_handle_thread, args=(target, args or (), kwargs or {}), **other)
+    _active_threads[thread] = (target, args, kwargs)
+    thread.daemon = True
+    thread.start()
+    return thread
+
+def _handle_thread(func, args, kwargs):
+    try:
+        func(*args, **kwargs)
+    finally:
+        _active_threads.pop(threading.current_thread(), None)
+
+
 @handler
-def hello(**kw):
+def hello(capabilities=None, **kw):
+    _capabilities.update(capabilities or {})
     reply(kw,
-        type='hello',
+        type='elloh',
         capabilities={'dispatch': True},
         executable=sys.executable,
         script=__file__,
@@ -60,12 +80,21 @@ def hello(**kw):
 
 @handler
 def dispatch(url, **kw):
-    log('dispatching:', url)
+    log('dispatching in thread:', url)
+    start_thread(_dispatch_target, args=(url, kw))
+
+def _dispatch_target(url, kw):
     res = _dispatch(url, reload=None)
     if isinstance(res, Exception):
         reply_exception(kw, res)
     else:
         reply(kw, type='result', result=res)
+
+
+@handler
+def confirm_response(session, **kw):
+    queue = _confirm_queues.pop(session)
+    queue.put(kw)
 
 
 def main():
@@ -97,15 +126,21 @@ def main():
         _current_source = msg.get('src')
         _progress_cancelled = None
 
-        if msg.get('type') in _handlers:
-            try:
-                _handlers[msg['type']](**msg)
-            except Exception as e:
-                traceback.print_exc()
-                reply_exception(msg, e)
-        else:
+        if msg.get('type') not in _handlers:
             reply(msg, type='error', error='unknown message type %r' % msg.get('type'))
             log('unknown message type: %s' % msg.get('type'))
+
+        try:
+            _handlers[msg['type']](**msg)
+        except Exception as e:
+            traceback.print_exc()
+            try:
+                reply_exception(msg, e)
+            except Exception as e:
+                # Just in case it is the exception reporting mechanism...
+                print >> sys.stderr, 'EXCEPTION DURING reply_exception'
+                traceback.print_exc()
+
 
     _running = False
 
@@ -134,6 +169,28 @@ def notify(message, details=None, strict=False):
         send(dst=_current_source, type='notify', message=message, details=details)
     elif strict:
         raise RuntimeError('no current native handler')
+
+def confirm(message, title=None, default=None):
+
+    if not _current_source:
+        if default is not None:
+            return default
+        raise RuntimeError('no current native handler')
+    if not _capabilities.get('confirm'):
+        if default is not None:
+            return default
+        raise RuntimeError('confirm is not supported by native handler')
+
+    queue = Queue(1)
+    session = os.urandom(8).encode('hex')
+    _confirm_queues[session] = queue
+
+    send(dst=_current_source, type='confirm', message=message, title=title,
+        session=session)
+
+    reply = queue.get()
+    log(repr(reply))
+    return reply['value']
 
 
 @handler('progress_cancelled')

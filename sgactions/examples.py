@@ -22,9 +22,17 @@ def dump_environ(**kwargs):
 def raise_error(**kwargs):
     raise ValueError('This is a test')
 
+
 def disconnect(**kwargs):
     if is_native():
-        exit(0)
+        os._exit(0)
     else:
         utils.alert(message='Not the native messenger.')
 
+
+def prompt_confirm(**kwargs):
+    res = utils.confirm(
+        title='Testing Shotgun Actions',
+        message='Do you want to do the thing?',
+    )
+    utils.notify('You pressed "%s"' % ('OK' if res else 'Cancel'))

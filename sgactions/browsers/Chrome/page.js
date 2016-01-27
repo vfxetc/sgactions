@@ -11,6 +11,7 @@ if (window.SGActions != undefined) {
     SGActions = {
 
         nativeCapabilities: {},
+
         postNative: function(msg) {
             msg.src = 'page';
             msg.dst = 'native';
@@ -120,6 +121,25 @@ if (window.SGActions != undefined) {
 
         hideProgress: function() {
             SGActions.hideMessage('sgactions_progress')
+        },
+
+        showConfirm: function(msg, callback, scope) {
+            var confirmDialog = new SG.ConfirmDialog({
+                title: msg.title || "SGActions",
+                body: msg.body || msg.message // Perhaps too forgiving.
+            }, scope || this);
+            confirmDialog.go().then(function() {
+                SGActions._confirmResponse(callback, confirmDialog, true)
+            }, function() {
+                SGActions._confirmResponse(callback, confirmDialog, false)
+            })
+            return confirmDialog;
+        },
+
+        _confirmResponse: function(callback, dialog, value) {
+            var data = {}
+            // var inputs = dialog.body_dom.getElementsByTagName('input')
+            callback(value, {})
         }
 
 
@@ -136,7 +156,7 @@ if (window.SGActions != undefined) {
 
         switch(msg.type) {
 
-            case 'hello':
+            case 'elloh': // Reply to our hello.
                 console.log('[SGActions] native connect with capabilities:', msg.capabilities);
                 SGActions.nativeCapabilities = msg.capabilities;
 
@@ -183,7 +203,7 @@ if (window.SGActions != undefined) {
 
             case 'result':
                 // We don't do anything with these except hide the "running" notifications.
-                console.log('[SGActions] action result:', msg['result']);
+                console.log('[SGActions] dispatch returned')
                 SGActions.hideMessage('sgactions_dispatch')
                 break
 
@@ -196,13 +216,30 @@ if (window.SGActions != undefined) {
                 SGActions.showAlert(msg)
                 break;
 
+            case 'confirm':
+                SGActions.showConfirm(msg, function(value) {
+                    SGActions.postNative({
+                        type: 'confirm_response',
+                        value: value,
+                        session: msg.session // So it knows what message it was for.
+                    })
+                })
+                break;
+
             default:
                 console.log('[SGActions] unknown message:', msg);
         }
     })
 
     // Say hello to the native messenger; it will tell is what it's capabilities are.
-    SGActions.postNative({type: 'hello'})
+    SGActions.postNative({
+        type: 'hello',
+        capabilities: {
+            notify : SG.Message !== undefined ? 1 : 0,
+            alert  : SG.AlertDialog           ? 1 : 0,
+            confirm: SG.ConfirmDialog         ? 1 : 0    
+        }
+    })
 
 
 
@@ -312,7 +349,7 @@ if (window.SGActions != undefined) {
             }
             return true;
         }
-
+        
         var attrs = filter[0].split('.')
         var head = entity;
         try {
