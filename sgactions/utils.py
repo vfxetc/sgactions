@@ -52,9 +52,15 @@ def progress_cancelled(strict=False):
     except RuntimeError:
         pass
 
+
 def confirm(*args, **kwargs):
     from .browsers.chrome_native import confirm
     return confirm(*args, **kwargs)
+
+
+def select(*args, **kwargs):
+    from .browsers.chrome_native import select
+    return select(*args, **kwargs)
 
 
 def get_shotgun(*args, **kwargs):

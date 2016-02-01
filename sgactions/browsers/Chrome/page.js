@@ -124,24 +124,83 @@ if (window.SGActions != undefined) {
         },
 
         showConfirm: function(msg, callback, scope) {
-            var confirmDialog = new SG.ConfirmDialog({
+            var dialog = new SG.ConfirmDialog({
                 title: msg.title || "SGActions",
                 body: msg.body || msg.message // Perhaps too forgiving.
             }, scope || this);
-            confirmDialog.go().then(function() {
-                SGActions._confirmResponse(callback, confirmDialog, true)
+            dialog.go().then(function() {
+                SGActions._confirmResponse(callback, dialog, true)
             }, function() {
-                SGActions._confirmResponse(callback, confirmDialog, false)
+                SGActions._confirmResponse(callback, dialog, false)
             })
-            return confirmDialog;
+            return dialog;
         },
 
         _confirmResponse: function(callback, dialog, value) {
             var data = {}
             // var inputs = dialog.body_dom.getElementsByTagName('input')
             callback(value, {})
-        }
+        },
 
+        _selectRowTemplate: new Ext.Template(
+            '<div class="sgactions-select-row">',
+                '<input type="radio" id="sgactions-select-input-{name}" name="sgactions-select" value="{name}" {checked}/>',
+                '<label for="sgactions-select-input-{name}">{label}</label>',
+            '</div>'
+        ),
+
+        showSelect: function(msg, callback, scope) {
+
+            var body = msg.prologue ? '<div class="sgactions-select-prologue">' + msg.prologue + '</div>' : '';
+            var hasDefault = false;
+            for (var i = 0; i < msg.options.length; i++) {
+                var option = msg.options[i];
+                option['checked'] = option['checked'] ? 'checked' : '';
+                hasDefault = hasDefault || option['checked'];
+                body += SGActions._selectRowTemplate.apply(option);
+            }
+            body += msg.epilogue ? '<div class="sgactions-select-epilogue">' + msg.epilogue + '</div>' : '';
+
+            var dialog = new SG.ConfirmDialog({
+                title: msg.title || 'SGActions Selector',
+                body: body,
+                ok_action: {extra_cls: 'blue_button'},
+            }, scope || this);
+            dialog.go().then(function() {
+                SGActions._selectResponse(callback, dialog, true)
+            }, function() {
+                SGActions._selectResponse(callback, dialog, false)
+            })
+
+            if (!hasDefault) {
+                var okButton = dialog.container.dom.getElementsByTagName('button')[1];
+                okButton.disabled = true;
+                var onInput = function() {
+                    okButton.disabled = false;
+                }
+                var inputs = dialog.body_dom.getElementsByTagName('input');
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].addEventListener('change', onInput, false);
+                }
+            }
+
+            return dialog
+        },
+
+        _selectResponse: function(callback, dialog, value) {
+            if (!value) {
+                callback(null)
+            } else {
+                var inputs = dialog.body_dom.getElementsByTagName('input');
+                for (var i = 0; i < inputs.length; i++) {
+                    var input = inputs[i];
+                    if (input.checked) {
+                        callback(input.value)
+                        return
+                    }
+                }
+            }
+        }
 
     }
 
@@ -219,7 +278,17 @@ if (window.SGActions != undefined) {
             case 'confirm':
                 SGActions.showConfirm(msg, function(value) {
                     SGActions.postNative({
-                        type: 'confirm_response',
+                        type: 'user_response',
+                        value: value,
+                        session: msg.session // So it knows what message it was for.
+                    })
+                })
+                break;
+
+            case 'select':
+                SGActions.showSelect(msg, function(value) {
+                    SGActions.postNative({
+                        type: 'user_response',
                         value: value,
                         session: msg.session // So it knows what message it was for.
                     })
@@ -237,7 +306,8 @@ if (window.SGActions != undefined) {
         capabilities: {
             notify : SG.Message !== undefined ? 1 : 0,
             alert  : SG.AlertDialog           ? 1 : 0,
-            confirm: SG.ConfirmDialog         ? 1 : 0    
+            confirm: SG.ConfirmDialog         ? 1 : 0,
+            select : SG.ConfirmDialog         ? 1 : 0    
         }
     })
 

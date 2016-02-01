@@ -28,7 +28,12 @@
     entrypoint: sgactions.examples:prompt_confirm
     folder: Development / Testing [cog]
     title: "Confirm [thumb_up]"
-    list_order: 95
+    list_order: 96
+-
+    entrypoint: sgactions.examples:prompt_select
+    folder: Development / Testing [cog]
+    title: "Select [thumb_up]"
+    list_order: 97
 -
     entrypoint: sgactions.examples:publish_is_geocache
     title: "Development / Is Geocache? [brick]"

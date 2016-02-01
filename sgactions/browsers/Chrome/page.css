@@ -12,3 +12,19 @@
     font-size: 0.8em;
     color: #888;
 }
+
+.sgactions-select-prologue {
+    margin-bottom: 1ex;
+}
+
+.sgactions-select-row {
+    margin-bottom: 0.3em;
+}
+
+.sgactions-select-row input {
+    margin-left: 1ex;
+}
+
+.sgactions-select-epilogue {
+    margin-top: 1ex;
+}

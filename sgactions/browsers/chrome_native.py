@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
+from Queue import Queue
 from warnings import warn
 import functools
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
 import threading
 import traceback
-from Queue import Queue
 
 if __name__ == '__main__':
     sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
@@ -92,7 +93,7 @@ def _dispatch_target(url, kw):
 
 
 @handler
-def confirm_response(session, **kw):
+def user_response(session, **kw):
     queue = _confirm_queues.pop(session)
     queue.put(kw)
 
@@ -191,6 +192,49 @@ def confirm(message, title=None, default=None):
     reply = queue.get()
     log(repr(reply))
     return reply['value']
+
+
+def select(options, prologue=None, epilogue=None, title=None, default=None):
+
+    if not _current_source:
+        if default is not None:
+            return default
+        raise RuntimeError('no current native handler')
+    if not _capabilities.get('select'):
+        if default is not None:
+            return default
+        raise RuntimeError('select is not supported by native handler')
+
+    # Normalize all of the options.
+    options = list(options)
+    for i, option in enumerate(options):
+        if isinstance(option, basestring):
+            option = {'name': option, 'label': option}
+        if isinstance(option, (tuple, list)):
+            option = {'name': option[0], 'label': option[1]}
+        else:
+            option = dict((key, option[key]) for key in ('name', 'label'))
+        if not re.match(r'[\w-]+$', option['name']):
+            raise ValueError('option name has special characters', option['name'])
+        options[i] = option
+        option['checked'] = option['name'] == default
+
+    queue = Queue(1)
+    session = os.urandom(8).encode('hex')
+    _confirm_queues[session] = queue
+
+    send(dst=_current_source, type='select', options=options, title=title,
+        prologue=prologue, epilogue=epilogue,
+        session=session)
+
+    reply = queue.get()
+    log(repr(reply))
+
+    value = reply['value']
+    if value is None:
+        return default
+    return value
+
 
 
 @handler('progress_cancelled')

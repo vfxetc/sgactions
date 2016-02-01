@@ -36,3 +36,13 @@ def prompt_confirm(**kwargs):
         message='Do you want to do the thing?',
     )
     utils.notify('You pressed "%s"' % ('OK' if res else 'Cancel'))
+
+
+def prompt_select(**kwargs):
+    res = utils.select(
+        title='Testing Shotgun Actions',
+        prologue="What is your favourite colour?",
+        options=[(x, x) for x in 'Red', 'Orange', 'Yellow', 'Other'],
+        epilogue="Just imagine that they are all listed here...",
+    )
+    utils.notify('You picked %s' % ('"%s"' % res if res else 'nothing'))
