@@ -111,12 +111,11 @@ var connect = function() {
     nativePort.onDisconnect.addListener(onDisconnect.bind(nativePort, thisId));
     nativePort.onMessage.addListener(routeMessage);
 
-    // We will forward this to everyone when we get it back so that they
-    // know the system is (back) up.
-    routeMessage({
+    // Let everyone know it is back up.
+    broadcast({
         src: 'background',
-        dst: 'native',
-        type: 'hello',
+        dst: 'page',
+        type: 'connect',
     })
 
 }

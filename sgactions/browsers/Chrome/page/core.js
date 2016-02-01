@@ -21,7 +21,7 @@ SGActions = {
     postNative: function(msg) {
         // Assert the envelope.
         msg.src = 'page';
-        msg.dst = 'native';
+        msg.dst = msg.dst || 'native';
         // Send it to main.js (the content-script).
         window.postMessage({sgactions: msg}, '*')
     },
@@ -46,16 +46,23 @@ SGActions = {
 window.addEventListener("message", SGActions._processNativeMessage, false);
 
 
-// Say hello to the native messenger; it will tell is what it's capabilities are.
-SGActions.postNative({
-    type: 'hello',
-    capabilities: {
-        notify : SG.Message !== undefined ? 1 : 0,
-        alert  : SG.AlertDialog           ? 1 : 0,
-        confirm: SG.ConfirmDialog         ? 1 : 0,
-        select : SG.ConfirmDialog         ? 1 : 0    
-    }
-})
+var hello = function(dst) {
+    // Say hello to the native messenger; it will tell is what it's capabilities are.
+    SGActions.postNative({
+        type: 'hello',
+        dst: dst || 'native',
+        capabilities: {
+            notify : SG.Message !== undefined ? 1 : 0,
+            alert  : SG.AlertDialog           ? 1 : 0,
+            confirm: SG.ConfirmDialog         ? 1 : 0,
+            select : SG.ConfirmDialog         ? 1 : 0    
+        }
+    })
+}
+
+// Make the initial connection attempt to the native handler.
+hello();
+
 
 SGActions.nativeHandlers.elloh = function(msg) {
 
@@ -83,6 +90,13 @@ SGActions.nativeHandlers.error = function(msg) {
 }
 
 
+SGActions.nativeHandlers.connect = function(msg) {
+    // We will only capture this one if we were already open.
+    console.log('[SGActions]', msg.src, 'reconnected');
+    // Attempt to shake hands with the native handler (again).
+    hello();
+}
+
 SGActions.nativeHandlers.disconnect = function(msg) {
 
     console.log('[SGActions]', msg.src, 'disconnected');
@@ -106,6 +120,7 @@ SGActions.nativeHandlers.disconnect = function(msg) {
     }
 
 }
+
 
 
 
