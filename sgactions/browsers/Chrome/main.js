@@ -62,7 +62,9 @@ function inject_js(url) {
     inject_node(script);
 }
 
-inject_css(chrome.extension.getURL("silk/silk-icons.css"));
-inject_css(chrome.extension.getURL("page.css"));
-inject_js(chrome.extension.getURL("page.js"));
+inject_css(chrome.extension.getURL("page/css/silk/silk-icons.css"));
+inject_css(chrome.extension.getURL("page/css/sgactions.css"));
+inject_js(chrome.extension.getURL("page/ui.js"));
+inject_js(chrome.extension.getURL("page/core.js")); // Depends on UI
+inject_js(chrome.extension.getURL("page/menu.js")); // Depends on UI
 

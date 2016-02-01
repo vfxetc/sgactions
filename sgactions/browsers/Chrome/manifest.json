@@ -16,11 +16,7 @@
     }],
 
     "web_accessible_resources": [
-        "page.js",
-        "page.css",
-        "silk/silk-icons.css",
-        "silk/silk-icons.png",
-        "silk/silk-icons.gif"
+        "page/*"
     ],
 
     "permissions": [
