@@ -11,6 +11,11 @@ import shotgun_api3
 log = logging.getLogger(__name__)
 
 
+def get_runtime():
+    from .browsers.chrome_native import runtime
+    return runtime
+
+
 def notify(message, title=None, sticky=None, details=None, strict=False):
     
     if title is not None:
@@ -19,8 +24,7 @@ def notify(message, title=None, sticky=None, details=None, strict=False):
         warn('sgactions.utils.notify sticky is deprecated')
 
     try:
-        from .browsers.chrome_native import notify
-        notify(message, details=details, strict=strict)
+        get_runtime().notify(message, details=details, strict=strict)
     except RuntimeError:
         # We lose the details here, but meh.
         from uitools.notifications import Notification
@@ -29,33 +33,21 @@ def notify(message, title=None, sticky=None, details=None, strict=False):
 def alert(message, title=None, strict=False):
     title = title or 'SGActions'
     try:
-        from .browsers.chrome_native import alert
-        alert(message, title=title, strict=strict)
+        get_runtime().alert(message, title=title, strict=strict)
     except RuntimeError:
         from uitools.notifications import Notification
         Notification(title, message).send()
 
 def progress(message, title=None, strict=False):
-    
     if title is not None:
         warn('sgactions.utils.progress title is deprecated')
     try:
-        from .browsers.chrome_native import progress
-        progress(message, title, strict=strict)
+        get_runtime().progress(message, title, strict=strict)
     except RuntimeError:
         pass
-
-def progress_cancelled(strict=False):
-    try:
-        from .browsers.chrome_native import progress_cancelled
-        return progress_cancelled(strict=strict)
-    except RuntimeError:
-        pass
-
 
 def confirm(*args, **kwargs):
-    from .browsers.chrome_native import confirm
-    return confirm(*args, **kwargs)
+    get_runtime().confirm(*args, **kwargs)
 
 
 def select(*args, **kwargs):

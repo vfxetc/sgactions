@@ -13,9 +13,6 @@ import threading
 import traceback
 import weakref
 
-if __name__ == '__main__':
-    sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
-
 
 def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
@@ -176,91 +173,6 @@ def _main_thread(msg):
             traceback.print_exc()
 
 
-# For runtime!
 
-def is_native():
-    return bool(current_session(False))
-
-def alert(message, title=None, strict=False):
-    session = current_session(strict)
-    if session:
-        send(dst=session['src'], type='alert', title=title, message=message)
-
-def progress(message, title=None, strict=False):
-    if title is not None:
-        warn('sgactions.browsers.chrome_native.progress title is deprecated')
-    session = current_session(strict)
-    if session:
-        send(dst=session['src'], type='progress', message=message)
-    elif strict:
-        raise RuntimeError('no current native handler')
-
-def notify(message, details=None, strict=False):
-    session = current_session(strict)
-    if session:
-        send(dst=session['src'], type='notify', message=message, details=details)
-    elif strict:
-        raise RuntimeError('no current native handler')
-
-def confirm(message, title=None, default=None):
-
-    session = current_session(strict=False)
-    if not session:
-        if default is not None:
-            return default
-        raise RuntimeError('no current native handler')
-    if not _capabilities.get('confirm'):
-        if default is not None:
-            return default
-        raise RuntimeError('confirm is not supported by native handler')
-
-    reply = send_and_recv(type='confirm', message=message, title=title)
-    return reply['value']
-
-
-def select(options, prologue=None, epilogue=None, title=None, default=None):
-
-    session = current_session(strict=False)
-    if not session:
-        if default is not None:
-            return default
-        raise RuntimeError('no current native handler')
-
-    if not _capabilities.get('select'):
-        if default is not None:
-            return default
-        raise RuntimeError('select is not supported by native handler')
-
-    # Normalize all of the options.
-    options = list(options)
-    for i, option in enumerate(options):
-        if isinstance(option, basestring):
-            option = {'name': option, 'label': option}
-        if isinstance(option, (tuple, list)):
-            option = {'name': option[0], 'label': option[1]}
-        else:
-            option = dict((key, option[key]) for key in ('name', 'label'))
-        if not re.match(r'[\w-]+$', option['name']):
-            raise ValueError('option name has special characters', option['name'])
-        options[i] = option
-        option['checked'] = option['name'] == default
-
-    reply = send_and_recv(
-        type='select',
-        title=title,
-        prologue=prologue,
-        options=options,
-        epilogue=epilogue,
-    )
-    value = reply['value']
-    if value is None:
-        return default
-    return value
-
-
-# This must be absolute, since this script is run directly in Linux.
+# Circular imports!
 from sgactions.dispatch import dispatch as _dispatch
-
-
-if __name__ == '__main__':
-    main()

@@ -9,31 +9,37 @@
     folder: Development / Inspect Context [zoom]
     title: "Show Kwargs [zoom]"
     list_order: 92
+
 -
     url: http://httpbin.org/post?one=1&two=2
     folder: Development / Inspect Context [zoom]
     title: "Show POST [zoom]"
     list_order: 93
+
 -
     entrypoint: sgactions.examples:raise_error
     folder: Development / Testing [cog]
     title: "Raise Error [bug]"
     list_order: 94
+
 -
     entrypoint: sgactions.examples:disconnect
     folder: Development / Testing [cog]
     title: "Disconnect Extension [cross]"
     list_order: 95
+
 -
     entrypoint: sgactions.examples:prompt_confirm
     folder: Development / Testing [cog]
-    title: "Confirm [thumb_up]"
+    title: "Confirm [error]"
     list_order: 96
+
 -
     entrypoint: sgactions.examples:prompt_select
     folder: Development / Testing [cog]
-    title: "Select [thumb_up]"
+    title: "Select [error]"
     list_order: 97
+
 -
     entrypoint: sgactions.examples:publish_is_geocache
     title: "Development / Is Geocache? [brick]"
