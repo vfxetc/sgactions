@@ -4,6 +4,8 @@
     margin: 0 0 0 -1px;
 }
 
+
+
 .sg_menu_item.sgactions-filter-passfail {
     font-style: italic;
 }
@@ -12,6 +14,14 @@
     font-size: 0.8em;
     color: #888;
 }
+
+
+
+.sgactions-dialog p {
+    margin-bottom: 0.5em;
+}
+
+
 
 .sgactions-select-prologue {
     margin-bottom: 1ex;

@@ -17,6 +17,25 @@ SGActionsUI = {}
 
 
 
+var getFormData = function(root) {
+    var allData = {}
+    var forms = root.getElementsByTagName('form')
+    for (var i = 0; i < forms.length; i++) {
+        var form = forms[0];
+        if (form.name) {
+            var data = {};
+            allData[form.name] = data;
+        } else {
+            var data = allData;
+        }
+        for (var j = 0; j < form.elements.length; j++) {
+            var el = form.elements[j];
+            data[el.name] = el.value;
+        }
+    }
+    return allData;
+}
+
 
 SGActionsUI.showAlert = function(msg) {
         
@@ -30,6 +49,7 @@ SGActionsUI.showAlert = function(msg) {
             action: {extra_cls: 'blue_button'},
             width: '800px',
         }, {})
+        dialog.css_class += ' sgactions-dialog sgactions-alert'
         dialog.present();            
     } catch (e) {
         if (msg.message) {
@@ -131,11 +151,15 @@ SGActionsUI.showConfirm = function(msg, callback, scope) {
         title: msg.title || "SGActions",
         body: msg.body || msg.message // Perhaps too forgiving.
     }, scope || this);
+    dialog.css_class += ' sgactions-dialog sgactions-confirm'
     dialog.go().then(function() {
-        callback(true)
+        var data = getFormData(dialog.body_dom);
+        callback(true, data)
     }, function() {
         callback(false)
     })
+
+
     return dialog;
 }
 
@@ -165,6 +189,7 @@ SGActionsUI.showSelect = function(msg, callback, scope) {
         body: body,
         ok_action: {extra_cls: 'blue_button'},
     }, scope || this);
+    dialog.css_class += ' sgactions-dialog sgactions-select'
     dialog.go().then(function() {
         selectResponse(callback, dialog, true)
     }, function() {

@@ -143,10 +143,13 @@ SGActions.nativeHandlers.alert = function(msg) {
 }
 
 SGActions.nativeHandlers.confirm = function(msg) {
-    SGActionsUI.showConfirm(msg, function(value) {
+    SGActionsUI.showConfirm(msg, function(ok, form) {
         SGActions.postNative({
             type: 'user_response',
-            value: value,
+            value: {
+                ok: ok,
+                form: form || null
+            },
             session_token: msg.session_token // So it knows what message it was for.
         })
     })

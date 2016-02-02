@@ -47,7 +47,7 @@ def progress(message, title=None, strict=False):
         pass
 
 def confirm(*args, **kwargs):
-    get_runtime().confirm(*args, **kwargs)
+    return get_runtime().confirm(*args, **kwargs)
 
 
 def select(*args, **kwargs):
