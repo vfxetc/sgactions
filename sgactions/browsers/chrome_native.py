@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import traceback
+import weakref
 
 if __name__ == '__main__':
     sys.modules['sgactions.browsers.chrome_native'] = sys.modules['__main__']
@@ -20,17 +21,12 @@ def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
-_active_threads = {}
-_capabilities = {}
-_current_source = None
-_handlers = {}
-_confirm_queues = {}
 
-def handler(func, name=None):
-    if isinstance(func, basestring):
-        return functools.partial(handler, name=func)
-    _handlers[name or func.__name__] = func
-    return func
+_capabilities = {}
+_handlers = {}
+_threads = weakref.WeakValueDictionary()
+_local = threading.local()
+
 
 def reply(orig, **msg):
     msg['dst'] = orig.get('src') or orig
@@ -52,18 +48,13 @@ def reply_exception(orig, e):
     reply(orig, **format_exception(e))
 
 
-def start_thread(target, args=None, kwargs=None, **other):
-    thread = threading.Thread(target=_handle_thread, args=(target, args or (), kwargs or {}), **other)
-    _active_threads[thread] = (target, args, kwargs)
-    thread.daemon = True
-    thread.start()
-    return thread
 
-def _handle_thread(func, args, kwargs):
-    try:
-        func(*args, **kwargs)
-    finally:
-        _active_threads.pop(threading.current_thread(), None)
+def handler(func, name=None):
+    if isinstance(func, basestring):
+        return functools.partial(handler, name=func)
+    _handlers[name or func.__name__] = func
+    return func
+
 
 
 @handler
@@ -79,12 +70,11 @@ def hello(capabilities=None, **kw):
     )
 
 
+
+
 @handler
 def dispatch(url, **kw):
-    log('dispatching in thread:', url)
-    start_thread(_dispatch_target, args=(url, kw))
-
-def _dispatch_target(url, kw):
+    log('dispatching:', url)
     res = _dispatch(url, reload=None)
     if isinstance(res, Exception):
         reply_exception(kw, res)
@@ -92,19 +82,37 @@ def _dispatch_target(url, kw):
         reply(kw, type='result', result=res)
 
 
+
+def send_and_recv(**kwargs):
+    session = current_session()
+    queue = session.get('result_queue')
+    if not queue:
+        queue = session['result_queue'] = Queue(1)
+    timeout = kwargs.pop('timeout', 300)
+    send(dst=session['src'], session_token=session['token'], **kwargs)
+    reply = queue.get(timeout=timeout)
+    log('async response:', repr(reply))
+    return reply
+
 @handler
-def user_response(session, **kw):
-    queue = _confirm_queues.pop(session)
-    queue.put(kw)
+def user_response(session_token, **kw):
+    thread = _threads.get(session_token)
+    if not thread:
+        raise ValueError('no matching thread', session_token)
+    session = thread.session
+    queue = session.get('result_queue')
+    if not queue:
+        raise ValueError('session not expecting result', session_token)
+    queue.put(kw, block=False)
 
 
 def main():
 
-    global _current_source
-
     # We need to take over both stdout and stderr so that print statements
     # don't result in chrome thinking it is getting a message back.
     sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
+
+    dispatch_counter = 0
 
     while True:
 
@@ -122,58 +130,82 @@ def main():
             send(**format_exception(e))
             continue
 
-        log('recv', size, raw_msg)
+        if len(_threads):
+            log('%d sessions open' % len(_threads))
 
-        _current_source = msg.get('src')
-        _progress_cancelled = None
+        log('recv', size, raw_msg)
 
         if msg.get('type') not in _handlers:
             reply(msg, type='error', error='unknown message type %r' % msg.get('type'))
             log('unknown message type: %s' % msg.get('type'))
 
-        try:
-            _handlers[msg['type']](**msg)
-        except Exception as e:
-            traceback.print_exc()
-            try:
-                reply_exception(msg, e)
-            except Exception as e:
-                # Just in case it is the exception reporting mechanism...
-                print >> sys.stderr, 'EXCEPTION DURING reply_exception'
-                traceback.print_exc()
+        dispatch_counter += 1
+
+        thread = _threads[dispatch_counter] = threading.Thread(target=_main_thread, args=[msg])
+        thread.daemon = True
+        thread.session = {
+            'type': msg['type'],
+            'src': msg.get('src'),
+            'token': dispatch_counter,
+        }
+        thread.start()
+        del thread # Kill this reference immediately.
+
 
 
     _running = False
 
 
+def current_session(strict=True):
+    try:
+        return threading.current_thread().session
+    except AttributeError:
+        if strict:
+            raise RuntimeError('no current native handler')
+
+def _main_thread(msg):
+    try:
+        _handlers[msg['type']](**msg)
+    except Exception as e:
+        traceback.print_exc()
+        try:
+            reply_exception(msg, e)
+        except Exception as e:
+            # Just in case it is the exception reporting mechanism...
+            print >> sys.stderr, 'EXCEPTION DURING reply_exception'
+            traceback.print_exc()
+
+
 # For runtime!
 
 def is_native():
-    return bool(_current_source)
+    return bool(current_session(False))
 
 def alert(message, title=None, strict=False):
-    if _current_source:
-        send(dst=_current_source, type='alert', title=title, message=message)
-    elif strict:
-        raise RuntimeError('no current native handler')
+    session = current_session(strict)
+    if session:
+        send(dst=session['src'], type='alert', title=title, message=message)
 
 def progress(message, title=None, strict=False):
     if title is not None:
         warn('sgactions.browsers.chrome_native.progress title is deprecated')
-    if _current_source:
-        send(dst=_current_source, type='progress', message=message)
+    session = current_session(strict)
+    if session:
+        send(dst=session['src'], type='progress', message=message)
     elif strict:
         raise RuntimeError('no current native handler')
 
 def notify(message, details=None, strict=False):
-    if _current_source:
-        send(dst=_current_source, type='notify', message=message, details=details)
+    session = current_session(strict)
+    if session:
+        send(dst=session['src'], type='notify', message=message, details=details)
     elif strict:
         raise RuntimeError('no current native handler')
 
 def confirm(message, title=None, default=None):
 
-    if not _current_source:
+    session = current_session(strict=False)
+    if not session:
         if default is not None:
             return default
         raise RuntimeError('no current native handler')
@@ -182,24 +214,18 @@ def confirm(message, title=None, default=None):
             return default
         raise RuntimeError('confirm is not supported by native handler')
 
-    queue = Queue(1)
-    session = os.urandom(8).encode('hex')
-    _confirm_queues[session] = queue
-
-    send(dst=_current_source, type='confirm', message=message, title=title,
-        session=session)
-
-    reply = queue.get()
-    log(repr(reply))
+    reply = send_and_recv(type='confirm', message=message, title=title)
     return reply['value']
 
 
 def select(options, prologue=None, epilogue=None, title=None, default=None):
 
-    if not _current_source:
+    session = current_session(strict=False)
+    if not session:
         if default is not None:
             return default
         raise RuntimeError('no current native handler')
+
     if not _capabilities.get('select'):
         if default is not None:
             return default
@@ -219,35 +245,17 @@ def select(options, prologue=None, epilogue=None, title=None, default=None):
         options[i] = option
         option['checked'] = option['name'] == default
 
-    queue = Queue(1)
-    session = os.urandom(8).encode('hex')
-    _confirm_queues[session] = queue
-
-    send(dst=_current_source, type='select', options=options, title=title,
-        prologue=prologue, epilogue=epilogue,
-        session=session)
-
-    reply = queue.get()
-    log(repr(reply))
-
+    reply = send_and_recv(
+        type='select',
+        title=title,
+        prologue=prologue,
+        options=options,
+        epilogue=epilogue,
+    )
     value = reply['value']
     if value is None:
         return default
     return value
-
-
-
-@handler('progress_cancelled')
-def on_progress_cancelled(**msg):
-    progress_cancelled(True)
-
-_progress_cancelled = None
-def progress_cancelled(value=None, strict=False):
-    global _progress_cancelled
-    if value is not None:
-        _progress_cancelled = value
-    return _progress_cancelled
-
 
 
 # This must be absolute, since this script is run directly in Linux.

@@ -147,7 +147,7 @@ SGActions.nativeHandlers.confirm = function(msg) {
         SGActions.postNative({
             type: 'user_response',
             value: value,
-            session: msg.session // So it knows what message it was for.
+            session_token: msg.session_token // So it knows what message it was for.
         })
     })
 }
@@ -157,7 +157,7 @@ SGActions.nativeHandlers.select = function(msg) {
         SGActions.postNative({
             type: 'user_response',
             value: value,
-            session: msg.session // So it knows what message it was for.
+            session_token: msg.session_token // So it knows what message it was for.
         })
     })
 }
