@@ -16,9 +16,15 @@
 }
 
 
-
+.sgactions-dialog h2 {
+    margin-bottom: 0.5em;
+}
 .sgactions-dialog p {
     margin-bottom: 0.5em;
+}
+
+.sgactions-dialog img {
+    border: 1px solid black;
 }
 
 

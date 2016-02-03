@@ -30,7 +30,9 @@ var getFormData = function(root) {
         }
         for (var j = 0; j < form.elements.length; j++) {
             var el = form.elements[j];
-            data[el.name] = el.value;
+                    if (el.checked === undefined || el.checked) {
+                data[el.name] = el.value;
+            }
         }
     }
     return allData;
@@ -47,7 +49,7 @@ SGActionsUI.showAlert = function(msg) {
             title: msg.title || 'SGActions',
             body: (msg.message || 'Alert!').replace(/\n/g, '<br>'),
             action: {extra_cls: 'blue_button'},
-            width: '800px',
+            width: '800px'
         }, {})
         dialog.css_class += ' sgactions-dialog sgactions-alert'
         dialog.present();            
@@ -149,7 +151,8 @@ SGActionsUI.hideProgress = function() {
 SGActionsUI.showConfirm = function(msg, callback, scope) {
     var dialog = new SG.ConfirmDialog({
         title: msg.title || "SGActions",
-        body: msg.body || msg.message // Perhaps too forgiving.
+        body: msg.body || msg.message, // Perhaps too forgiving.
+        width: msg.width || '800px'
     }, scope || this);
     dialog.css_class += ' sgactions-dialog sgactions-confirm'
     dialog.go().then(function() {
