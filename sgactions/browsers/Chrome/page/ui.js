@@ -30,7 +30,7 @@ var getFormData = function(root) {
         }
         for (var j = 0; j < form.elements.length; j++) {
             var el = form.elements[j];
-                    if (el.checked === undefined || el.checked) {
+            if (el.checked || (el.type != 'radio' && el.type != 'checkbox')) {
                 data[el.name] = el.value;
             }
         }
@@ -52,7 +52,7 @@ SGActionsUI.showAlert = function(msg) {
             width: '800px'
         }, {})
         dialog.css_class += ' sgactions-dialog sgactions-alert'
-        dialog.present();            
+        dialog.present();
     } catch (e) {
         if (msg.message) {
             alert(msg.message)
