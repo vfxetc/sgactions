@@ -10,6 +10,7 @@ fi
 # Debugging info; gets sent to the console.
 export SGACTIONS_NATIVE_SH="$0"
 export SGACTIONS_EXT_ID="$1"
+export SGACTIONS_HOST="${2-Chrome}"
 
 # Always load the Python that is associated with this version of sgactions.
 # If sgactions was registered in dev mode, that will result in the dev

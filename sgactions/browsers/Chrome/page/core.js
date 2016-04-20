@@ -23,6 +23,7 @@ SGActions = {
         msg.src = 'page';
         msg.dst = msg.dst || 'native';
         // Send it to main.js (the content-script).
+        console.log('Posting', msg)
         window.postMessage({sgactions: msg}, '*')
     },
 
@@ -55,7 +56,7 @@ var hello = function(dst) {
             notify : SG.Message !== undefined ? 1 : 0,
             alert  : SG.AlertDialog           ? 1 : 0,
             confirm: SG.ConfirmDialog         ? 1 : 0,
-            select : SG.ConfirmDialog         ? 1 : 0    
+            select : SG.ConfirmDialog         ? 1 : 0
         }
     })
 }

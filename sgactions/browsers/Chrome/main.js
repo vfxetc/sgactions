@@ -1,6 +1,8 @@
 
 
+// The abstract object for connecting to the "background".
 var port;
+var isChrome = window.chrome != undefined
 
 var routeMessage = function(msg) {
     if (msg.dst == 'page') {
@@ -10,7 +12,7 @@ var routeMessage = function(msg) {
     }
 }
 
-var onDisconnect = function(event) {
+var onDisconnect = function() {
     console.log('[SGActions] background disconnected')
     port = null
     routeMessage({
@@ -20,51 +22,67 @@ var onDisconnect = function(event) {
     })
 }
 
-var connect = function() {
+var connectToBackground = function() {
     console.log('[SGActions] connecting to background')
-    port = chrome.runtime.connect();
-    port.onMessage.addListener(routeMessage);
-    port.onDisconnect.addListener(onDisconnect);
+    if (isChrome) {
+        port = chrome.runtime.connect();
+        port.onMessage.addListener(routeMessage);
+        port.onDisconnect.addListener(onDisconnect);
+    } else { // Firefox
+        port = self.port;
+        port.on('message', routeMessage);
+        // There is no disconnect?!
+    }
 }
-connect();
+connectToBackground();
+
+var sendToBackground = function(msg) {
+    if (isChrome) {
+        port.postMessage(msg)
+    } else {
+        port.emit('message', msg)
+    }
+}
 
 window.addEventListener("message", function(e) {
-    
-    if (e.source != window) return; // Must be from this page.
+
+    // TODO: Figure out why Firefox does not like looking at e.source
+    //if (e.source != window) return; // Must be from this page.
     if (!e.data.sgactions) return;  // Must be sgactions.
 
     var msg = e.data.sgactions;
-
     // Redirect messages to the background to it.
     if (msg.dst == 'background' || msg.dst == 'native') {
-        port.postMessage(msg);
+        sendToBackground(msg);
     }
 
 })
 
-
-function inject_node(node) {
-    (document.head || document.body || document.documentElement).appendChild(node);
+function getPageURL(url) {
+    if (isChrome) { // Chrome
+        return chrome.extension.getURL('page/' + url)
+    } else { // Firefox
+        return self.options.pageURL + '/' + url
+    }
 }
 
-function inject_css(url) {
+function injectCSS(url) {
     var link = document.createElement("link");
     link.setAttribute("rel", "stylesheet");
     link.setAttribute("type", "text/css");
     link.setAttribute("href", url);
-    inject_node(link);
+    document.head.appendChild(link);
 }
 
-function inject_js(url) {
+function injectJS(url) {
     var script = document.createElement("script");
     script.type = "text/javascript";
     script.src = url
-    inject_node(script);
+    document.head.appendChild(script);
 }
 
-inject_css(chrome.extension.getURL("page/css/silk/silk-icons.css"));
-inject_css(chrome.extension.getURL("page/css/sgactions.css"));
-inject_js(chrome.extension.getURL("page/ui.js"));
-inject_js(chrome.extension.getURL("page/core.js")); // Depends on UI
-inject_js(chrome.extension.getURL("page/menu.js")); // Depends on UI
-
+injectCSS(getPageURL("css/silk/silk-icons.css"));
+injectCSS(getPageURL("css/sgactions.css"));
+injectJS(getPageURL("ui.js"));
+injectJS(getPageURL("core.js")); // Depends on UI.
+injectJS(getPageURL("menu.js")); // Depends on UI.

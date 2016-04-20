@@ -5,7 +5,7 @@ import sys
 import traceback
 import urlparse
 
-from metatools.imports import load_entrypoint
+#from metatools.imports import load_entrypoint
 
 from . import utils
 from . import tickets
@@ -17,7 +17,7 @@ def parse_url(url):
     m = re.match(r'^(?:(\w+):)?(.*?)(?:/(.*?))?(?:\?(.*))?$', url)
     scheme, netloc, path, query = m.groups()
     query = urlparse.parse_qs(query, keep_blank_values=True) if query else {}
-    
+
     # Parse the values.
     for k, v in query.items():
         if k == 'ids' or k.endswith('_ids'):
@@ -27,7 +27,7 @@ def parse_url(url):
             v[:] = [int(x) for x in v]
         if len(v) == 1 and k not in ('cols', 'column_display_names'):
             query[k] = v[0]
-    
+
     # Parse the path into an entrypoint.
     m = re.match(r'^([\w.]+:\w+)$', netloc)
     if not m:
@@ -44,7 +44,7 @@ def dispatch(url, reload=False):
         entrypoint, kwargs = parse_url(url)
         func = load_entrypoint(entrypoint, reload=reload)
         return func(**kwargs)
-    
+
     except Exception, e:
 
         # Default value in case there is an error in traceback.format_exc()...
@@ -78,7 +78,7 @@ def dispatch(url, reload=False):
 
 
 def main():
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', choices=['sgactions.dispatch']) # Just to ignore this parameter.
     parser.add_argument('--chrome-native', action='store_true') # Fall into the native dispatcher.
@@ -97,12 +97,10 @@ def main():
         os.unlink(args.file)
 
     sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
-    
+
     dispatch(url)
 
-                
+
 
 if __name__ == '__main__':
     exit(main() or 0)
-
-    

@@ -5,7 +5,8 @@ import sys
 import tempfile
 from subprocess import call, check_call, CalledProcessError
 from warnings import warn
-import shotgun_api3
+
+#import shotgun_api3
 
 
 log = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ def get_runtime():
 
 
 def notify(message, title=None, sticky=None, details=None, strict=False):
-    
+
     if title is not None:
         warn('sgactions.utils.notify title is deprecated')
     if sticky is not None:
@@ -76,4 +77,3 @@ def get_shotgun(*args, **kwargs):
 
 if __name__ == '__main__':
     notify('Test message', 'Test')
-

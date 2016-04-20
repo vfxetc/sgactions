@@ -18,6 +18,7 @@ def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
+_line_based == os.environ.get('SGACTIONS_HOST') == 'Firefox'
 
 _capabilities = {}
 _handlers = {}
@@ -107,9 +108,12 @@ def main():
 
     # We need to take over both stdout and stderr so that print statements
     # don't result in chrome thinking it is getting a message back.
-    sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
+    sys.stdout = open('/tmp/sgactions.native.log', 'a')
+    # sys.stderr = sys.stdout
 
     dispatch_counter = 0
+
+    print >> sys.stderr, '[SGActions] entering main loop'
 
     while True:
 
@@ -120,6 +124,7 @@ def main():
 
         try:
             size, = struct.unpack('I', raw_size)
+            print >> sys.stderr, '[SGActions] msg of size', raw_size
             raw_msg = sys.stdin.read(size)
             msg = json.loads(raw_msg)
         except Exception as e:
