@@ -47,7 +47,7 @@ var sendToBackground = function(msg) {
 window.addEventListener("message", function(e) {
 
     // TODO: Figure out why Firefox does not like looking at e.source
-    //if (e.source != window) return; // Must be from this page.
+    // if (e.source != window) return; // Must be from this page.
     if (!e.data.sgactions) return;  // Must be sgactions.
 
     var msg = e.data.sgactions;

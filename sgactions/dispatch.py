@@ -5,7 +5,10 @@ import sys
 import traceback
 import urlparse
 
-#from metatools.imports import load_entrypoint
+# HACK: Just for Mark Media for today.
+sys.path.append('/home/mikeb-local/dev/metatools')
+
+from metatools.imports import load_entrypoint
 
 from . import utils
 from . import tickets

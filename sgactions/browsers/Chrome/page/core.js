@@ -23,7 +23,6 @@ SGActions = {
         msg.src = 'page';
         msg.dst = msg.dst || 'native';
         // Send it to main.js (the content-script).
-        console.log('Posting', msg)
         window.postMessage({sgactions: msg}, '*')
     },
 

@@ -19,32 +19,34 @@ exports.onUnload = function(reason) {
 }
 
 var proc = null;
+var buffer = '';
 
 var handleInput = function(data) {
 
-    if (!this.buffer) {
-        this.buffer = data
+    if (!buffer) {
+        buffer = data
     } else {
-        this.buffer += data
+        buffer += data
     }
 
-    while (this.buffer) {
-        var parts = this.buffer.match(/^([^\n\r]*)[\n\r]+(.*)$/)
+    while (buffer) {
+
+        var parts = buffer.match(/^([^\n\r]*)[\n\r]+([\s\S]*)$/)
         if (!parts) {
             return
         }
         var raw = parts[1];
-        this.buffer = parts[2] || '';
+        buffer = parts[2] || '';
 
         var msg = JSON.parse(raw)
-        console.error('DECODED:')
-        console.error(msg)
 
         // Dispatch it to the worker.
-        var id = msg.dst.tab_id;
-        var worker = workers[msg.dst.tab_id]
+        var id = msg.dst.tab_id
+        var worker = workers[id]
         msg.dst = msg.dst.next
         worker.port.emit('message', msg)
+
+        //console.error("DISPATCHED TO WORKER " + id)
 
     }
 
@@ -52,6 +54,7 @@ var handleInput = function(data) {
 
 
 var connectToNative = function() {
+    // TODO: FIX THIS.
     proc = spawn('/home/mikeb-local/dev/sgactions/sgactions/browsers/Chrome/native.sh', [self.id, 'Firefox'], {
         env: env,
         stdio: ['pipe', 'pipe', 2],
@@ -72,7 +75,6 @@ var sendToNative = function(msg) {
         connectToNative()
     }
     var encoded = JSON.stringify(msg)
-    //console.error("sending message to native " + encoded.length)
     emit(proc.stdin, 'data', encoded + '\n')
 }
 

@@ -122,7 +122,6 @@ def main():
 
         try:
             if _line_based:
-                log('reading from stdin')
                 raw_msg = sys.stdin.readline()
                 if not raw_msg:
                     print >> sys.stderr, '[SGActions] native port closed'
@@ -133,7 +132,7 @@ def main():
                     print >> sys.stderr, '[SGActions] native port closed'
                     break
                 size, = struct.unpack('I', raw_size)
-                print >> sys.stderr, '[SGActions] msg of size', raw_size
+                print >> sys.stderr, '[SGActions] reading message of size', raw_size
                 raw_msg = sys.stdin.read(size)
             msg = json.loads(raw_msg)
         except Exception as e:
