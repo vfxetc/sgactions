@@ -18,7 +18,7 @@ def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
-_line_based == os.environ.get('SGACTIONS_HOST') == 'Firefox'
+_line_based = os.environ.get('SGACTIONS_HOST') == 'Firefox'
 
 _capabilities = {}
 _handlers = {}
@@ -35,8 +35,11 @@ def send(**msg):
     msg['src'] = 'native'
     encoded_msg = json.dumps(msg)
     log('send', len(encoded_msg), encoded_msg)
-    sys.__stdout__.write(struct.pack('I', len(encoded_msg)))
-    sys.__stdout__.write(encoded_msg)
+    if _line_based:
+        sys.__stdout__.write(encoded_msg + '\n')
+    else:
+        sys.__stdout__.write(struct.pack('I', len(encoded_msg)))
+        sys.__stdout__.write(encoded_msg)
     sys.__stdout__.flush()
 
 def format_exception(e):
@@ -117,15 +120,21 @@ def main():
 
     while True:
 
-        raw_size = sys.stdin.read(4)
-        if not raw_size:
-            print >> sys.stderr, '[SGActions] native port closed'
-            break
-
         try:
-            size, = struct.unpack('I', raw_size)
-            print >> sys.stderr, '[SGActions] msg of size', raw_size
-            raw_msg = sys.stdin.read(size)
+            if _line_based:
+                log('reading from stdin')
+                raw_msg = sys.stdin.readline()
+                if not raw_msg:
+                    print >> sys.stderr, '[SGActions] native port closed'
+                    break
+            else:
+                raw_size = sys.stdin.read(4)
+                if not raw_size:
+                    print >> sys.stderr, '[SGActions] native port closed'
+                    break
+                size, = struct.unpack('I', raw_size)
+                print >> sys.stderr, '[SGActions] msg of size', raw_size
+                raw_msg = sys.stdin.read(size)
             msg = json.loads(raw_msg)
         except Exception as e:
             traceback.print_exc()
@@ -134,8 +143,6 @@ def main():
 
         if len(_threads):
             log('%d sessions open' % len(_threads))
-
-        log('recv', size, raw_msg)
 
         if msg.get('type') not in _handlers:
             reply(msg, type='error', error='unknown message type %r' % msg.get('type'))

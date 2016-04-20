@@ -19,52 +19,33 @@ exports.onUnload = function(reason) {
 }
 
 var proc = null;
-var size = null;
-var buffer = '';
 
 var handleInput = function(data) {
 
-    console.error('stdout', data)
-    console.error('handleInput size ' + data.length)
-
-    buffer = buffer.length ? buffer + data : data
-    console.error('buffer size ' + buffer.length)
-
-    if (size == null) {
-        if (buffer.length < 4) {
-            return
-        }
-        size = decodeInt(buffer)
-        if (!size || size > (1024 * 1024)) {
-            console.error("invalid message size: " + size)
-            proc.kill()
-            proc = null
-            return
-        }
-        console.error('recv ' + size)
-        buffer = buffer.substr(4)
-    }
-
-    if (size > buffer.length) {
-        return
-    }
-    else if (size == buffer.length) {
-        raw = buffer
-        data = ''
-        buffer = ''
+    if (!this.buffer) {
+        this.buffer = data
     } else {
-        raw = buffer.substr(0, size)
-        data = buffer.substr(size)
-        buffer = ''
+        this.buffer += data
     }
 
-    console.error('recv raw: ' + raw)
-    var msg = JSON.parse(raw)
-    console.error('DECODED:')
-    console.error(msg)
+    while (this.buffer) {
+        var parts = this.buffer.match(/^([^\n\r]*)[\n\r]+(.*)$/)
+        if (!parts) {
+            return
+        }
+        var raw = parts[1];
+        this.buffer = parts[2] || '';
 
-    if (data.length) {
-        handleInput(data)
+        var msg = JSON.parse(raw)
+        console.error('DECODED:')
+        console.error(msg)
+
+        // Dispatch it to the worker.
+        var id = msg.dst.tab_id;
+        var worker = workers[msg.dst.tab_id]
+        msg.dst = msg.dst.next
+        worker.port.emit('message', msg)
+
     }
 
 }
@@ -85,36 +66,15 @@ var connectToNative = function() {
     })
 }
 
-var encodeInt = function(x) {
-    var chr = String.fromCharCode;
-    return (
-        chr(x       & 0xff) +
-        chr(x >> 8  & 0xff) +
-        chr(x >> 16 & 0xff) +
-        chr(x >> 24 & 0xff)
-    )
-}
-
-var decodeInt = function(x) {
-    var ord = function(i) { x.charCodeAt(i) }
-    return (
-        ord(0) +
-        ord(1) << 8 +
-        ord(2) << 16 +
-        ord(3) << 24
-    )
-}
-
 
 var sendToNative = function(msg) {
     if (!proc) {
         connectToNative()
     }
     var encoded = JSON.stringify(msg)
-    console.error("sending message to native " + encoded.length)
-    emit(proc.stdin, 'data', encodeInt(encoded.length) + encoded)
+    //console.error("sending message to native " + encoded.length)
+    emit(proc.stdin, 'data', encoded + '\n')
 }
-
 
 PageMod({
     include: "*.shotgunstudio.com",
@@ -125,10 +85,17 @@ PageMod({
     onAttach: scriptAttached
 })
 
+var workerCount = 0
+var workers = {}
 function scriptAttached(worker) {
-    console.error('SGA BG scriptAttached')
+    workerCount += 1
+    var id = workerCount
+    workers[id] = worker
+    //console.error('SGA BG scriptAttached')
     worker.port.on('message', function(msg) {
-        console.error('SGA bg message:', msg)
+        //console.error('SGA bg message:', msg)
+        // Add routing info.
+        msg.src = {tab_id: id, next: msg.src}
         sendToNative(msg)
     })
 }
