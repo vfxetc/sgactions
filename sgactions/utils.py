@@ -6,7 +6,10 @@ import tempfile
 from subprocess import call, check_call, CalledProcessError
 from warnings import warn
 
-#import shotgun_api3
+try:
+    import shotgun_api3
+except ImportError as e:
+    pass
 
 
 log = logging.getLogger(__name__)
@@ -70,7 +73,7 @@ def get_shotgun(*args, **kwargs):
     try:
         import shotgun_api3_registry
     except ImportError:
-        raise RuntimeError("Set $SHOTGUN_API3_ARGS or provide shotgun_api3_registry.connect()")
+        raise RuntimeError("Set $SHOTGUN_{SERVER,SCRIPT_NAME,SCRIPT_KEY} or provide shotgun_api3_registry.connect()")
     else:
         return shotgun_api3_registry.connect(*args, **kwargs)
 
