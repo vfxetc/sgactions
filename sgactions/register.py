@@ -134,7 +134,7 @@ def install_native_messenger(native_dir, ext_path, native_origins):
         fh.write(json.dumps({
             "name": "com.westernx.sgactions",
             "description": "SGActions",
-            "path": os.path.join(ext_path, 'native.sh'),
+            "path": os.path.abspath(os.path.join(ext_path, '..', 'native', 'sgactions-native-messenger')),
             "type": "stdio",
             "allowed_origins": native_origins,
         }))

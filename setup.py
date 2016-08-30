@@ -47,6 +47,9 @@ setup(
 
     }],
 
+    scripts=[
+        'sgactions/browsers/native/sgactions-native-messenger',
+    ],
 
     classifiers=[
         'Intended Audience :: Developers',

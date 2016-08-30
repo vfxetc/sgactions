@@ -20,4 +20,4 @@ export PYTHONPATH="$(dirname $0)/../../..:$PYTHONPATH"
 # We could use the app at /usr/local/vee/Applications/SGActions.app, but
 # then it would always be the in dock. Instead, notifications may get a
 # little messier.
-exec python -m sgactions.browsers.chrome_native
+exec python -m sgactions.browsers.native
