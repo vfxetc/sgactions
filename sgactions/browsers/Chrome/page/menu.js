@@ -259,23 +259,15 @@ window.Ext.override(window.SG.Menu, {
 
             }
 
-            
-            // Collapse headings and lines.
-            var last_heading = null;
+            // Collapse identical headings, and parse icons.
+            var current_heading = null;
             for (var i = 0; i < this.items.length; i++) {
 
-                if (this.items[i].heading != last_heading) {
+                if (this.items[i].heading != current_heading) {
 
                     // Create all-new heading objects because they have
                     // icons as of (approx.) Shotgun 7.
                     if (this.items[i].heading) {
-
-                        // Remove double lines before headline changes.
-                        // An item with a "heading" implies a line, but there
-                        // is an item `{line: true}` before our ActionMenuItems.
-                        if (i && this.items[i-1].line && !this.items[i-1].html) {
-                            this.items[i-1].line = false;
-                        }
 
                         var item = {
                             heading: this.items[i].heading
@@ -296,15 +288,27 @@ window.Ext.override(window.SG.Menu, {
                         // Add a line to seperate from the header.
                         this.items.splice(i, 0, {line: true});
                         i++;
-                    
+
                     }
 
-                    last_heading = this.items[i].heading;
+                    current_heading = this.items[i].heading;
 
                 }
 
+                // Remove the heading from the items themselves.
                 this.items[i].heading = null;
                 
+            }
+
+            // Remove double lines before headline changes.
+            // An item with a "heading" implies a line, but there
+            // is an item `{line: true}` before our ActionMenuItems.
+            for (var i = 1; i < this.items.length; i++) {
+                console.log(this.items[i]);
+                if ((this.items[i].line || this.items[i].heading) && this.items[i-1].line && !this.items[i-1].html) {
+                    console.log('HERE')
+                    this.items[i-1].line = false;
+                }
             }
             
         
