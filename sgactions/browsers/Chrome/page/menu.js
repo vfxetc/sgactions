@@ -199,9 +199,13 @@ window.Ext.override(window.SG.Menu, {
 
                     var filter = null;
 
+                    // Method 1 of encoding rich data; the second path segment of the URL:
+                    // e.g.: `sgactions:xxx/h=Heading&t=Title&i=icon&f={json-of-filter}`
+                    // This is not prefered since there are URL-length limitations when
+                    // using the fallback dispatch methods, also because it cannot affect
+                    // folders.
                     if (/^sgaction/.test(item.url || '')) {
 
-                        // Parse the rich data.
                         var rich = {};
                         var m = /^(.+?)\/(.+?)$/.exec(item.url);
                         if (m) {
@@ -213,31 +217,30 @@ window.Ext.override(window.SG.Menu, {
                             }
                         }
 
-
                         item.html = rich.t || item.html;
                         item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
                         item.heading = rich.h;
 
                         filter = rich.f ? JSON.parse(rich.f) : null;
-                        
+            
                     }
 
                     // New method: Rich data in the title itself, e.g.:
-                    // "Heading / Title [icon]"
+                    // "Heading / Title"
                     var m = /^\s*(.+?)\s+\/\s+(.+?)\s*$/.exec(item.html || '');
                     if (m) {
                         item.heading = m[1];
                         item.html = m[2];
                     }
 
-                    // Icon in square-brackets at end.
+                    // Icon in square-brackets at end: "Title [icon]"
                     m = /^(.+?)\s*\[(.+?)\]$/.exec(item.html || '');
                     if (m) {
                         item.html = m[1];
                         item.icon_name = 'silk-icon silk-icon-' + m[2];
                     }
 
-                    // Styling for expression.
+                    // Evalute the filters, and disable/style the results.
                     if (filter) {
                         if (selected == null) {
                             selected = get_selected_entities(this.parent)
@@ -255,22 +258,53 @@ window.Ext.override(window.SG.Menu, {
                 }
 
             }
+
             
             // Collapse headings and lines.
             var last_heading = null;
             for (var i = 0; i < this.items.length; i++) {
-                
-                // Headings.
-                if (this.items[i].heading == last_heading) {
-                    this.items[i].heading = null
-                } else {
+
+                if (this.items[i].heading != last_heading) {
+
+                    // Create all-new heading objects because they have
+                    // icons as of (approx.) Shotgun 7.
+                    if (this.items[i].heading) {
+
+                        // Remove double lines before headline changes.
+                        // An item with a "heading" implies a line, but there
+                        // is an item `{line: true}` before our ActionMenuItems.
+                        if (i && this.items[i-1].line && !this.items[i-1].html) {
+                            this.items[i-1].line = false;
+                        }
+
+                        var item = {
+                            heading: this.items[i].heading
+                        }
+
+                        // Icon in square-brackets at end: "Title [icon]"
+                        m = /^(.+?)\s*\[(.+?)\]$/.exec(item.heading || '');
+                        if (m) {
+                            item.heading = m[1];
+                            item.icon_name = 'silk-icon silk-icon-' + m[2];
+                        }
+
+                        this.items.splice(i, 0, item);
+                        i++; // skip it during iteration
+
+                    } else {
+
+                        // Add a line to seperate from the header.
+                        this.items.splice(i, 0, {line: true});
+                        i++;
+                    
+                    }
+
                     last_heading = this.items[i].heading;
+
                 }
+
+                this.items[i].heading = null;
                 
-                // Double lines before headline changes.
-                if (i && this.items[i].heading && this.items[i-1].line && !this.items[i-1].html) {
-                    this.items[i-1].line = false;
-                }
             }
             
         

@@ -4,7 +4,13 @@
     margin: 0 0 0 -1px;
 }
 
-
+/* I don't think they ever put icons in the heading, so
+   we need to help them a long a little.
+   NOTE: These are not under our control! */
+.sg_menu_heading .sg_menu_icon {
+    float: left;
+    display: inline-block;
+}
 
 .sg_menu_item.sgactions-filter-passfail {
     font-style: italic;
