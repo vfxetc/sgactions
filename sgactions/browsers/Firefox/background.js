@@ -5,7 +5,10 @@ const { spawn } = require("sdk/system/child_process")
 const { env } = require('sdk/system/environment')
 var self = require('sdk/self')
 
+
+// This is going to go to the terminal if you are running Firefox/Nightly there.
 console.error('SGActions index.js')
+
 
 exports.main = function(options, callbacks) {
     // console.error('SGActions index.js:main')
@@ -54,9 +57,17 @@ var handleInput = function(data) {
 
 
 var connectToNative = function() {
-    // TODO: FIX THIS.
-    proc = spawn('/home/mikeb-local/dev/sgactions/sgactions/browsers/Chrome/native.sh', [self.id, 'Firefox'], {
-        env: env,
+
+    // The Firefox SDK version of child_process does not inherit envvars.
+    // The env object is not enumerable, so we need to manually pick the
+    // variables that we want to send through. We pass through VEE_EXEC_ARGS
+    // so that bashrc use that to rebuild the environment.
+    proc = spawn('/bin/bash', ['-c', 'env | sort >&2; sgactions-native-messenger ' + self.id + ' Firefox'], {
+        env: {
+            PATH: env.PATH,
+            PYTHONPATH: env.PYTHONPATH,
+            VEE_EXEC_ARGS: env.VEE_EXEC_ARGS
+        },
         stdio: ['pipe', 'pipe', 2],
     })
     proc.stdout.on('data', handleInput)
@@ -67,6 +78,7 @@ var connectToNative = function() {
         console.error('child closed with code ' + code)
         proc = null
     })
+
 }
 
 
