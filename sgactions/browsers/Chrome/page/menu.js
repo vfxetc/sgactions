@@ -304,9 +304,7 @@ window.Ext.override(window.SG.Menu, {
             // An item with a "heading" implies a line, but there
             // is an item `{line: true}` before our ActionMenuItems.
             for (var i = 1; i < this.items.length; i++) {
-                console.log(this.items[i]);
                 if ((this.items[i].line || this.items[i].heading) && this.items[i-1].line && !this.items[i-1].html) {
-                    console.log('HERE')
                     this.items[i-1].line = false;
                 }
             }
