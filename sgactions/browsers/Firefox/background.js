@@ -62,12 +62,27 @@ var connectToNative = function() {
     // The env object is not enumerable, so we need to manually pick the
     // variables that we want to send through. We pass through VEE_EXEC_ARGS
     // so that bashrc use that to rebuild the environment.
-    proc = spawn('/bin/bash', ['-c', 'env | sort >&2; sgactions-native-messenger ' + self.id + ' Firefox'], {
-        env: {
-            PATH: env.PATH,
-            PYTHONPATH: env.PYTHONPATH,
-            VEE_EXEC_ARGS: env.VEE_EXEC_ARGS
-        },
+    var new_env = {}
+    var envvars = ["PATH", "PYTHONPATH", "VEE_EXEC_ARGS"]
+    for (var i = 0; i < envvars.length; i++) {
+        if (env[envvars[i]] !== undefined) {
+            new_env[envvars[i]] = env[envvars[i]];
+        }
+    }
+
+    // On OS X the `login` process (e.g. your GUI) does not pull envvars from
+    // ~/.bashrc or ~/*profile. We need to force it.
+    proc = spawn('/bin/bash', ['-c',
+        'echo "Starting SGActions in env:" >&2\n' +
+        'env | sort >&2\n' +
+        'if ! which sgactions-native-messenger >/dev/null; then\n' +
+        '    echo "Could not find in base environ; sourcing ~/.bashrc ..." >&2\n' +
+        '    source ~/.bashrc >&2\n' +
+        '    env | sort >&2\n' +
+        'fi\n' +
+        'sgactions-native-messenger ' + self.id + ' Firefox'
+    ], {
+        env: new_env,
         stdio: ['pipe', 'pipe', 2],
     })
     proc.stdout.on('data', handleInput)
