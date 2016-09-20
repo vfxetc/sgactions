@@ -1,7 +1,7 @@
 {
     "title": "SGActions",
     "name": "sgactions",
-    "version": "0.0.4.1",
+    "version": "0.0.4.2",
     "description": "SGActions integration into Shotgun",
     "main": "background.js",
     "author": "Mike Boers",

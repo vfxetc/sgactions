@@ -62,8 +62,9 @@ var connectToNative = function() {
     // The env object is not enumerable, so we need to manually pick the
     // variables that we want to send through. We pass through VEE_EXEC_ARGS
     // so that bashrc use that to rebuild the environment.
+    // TODO: Move MMCORE_SHLVL and VEE_EXEC_ARGS into a user preference.
     var new_env = {}
-    var envvars = ["PATH", "PYTHONPATH", "VEE_EXEC_ARGS"]
+    var envvars = ["DISPLAY", "PATH", "PYTHONPATH", "MMCORE_SHLVL", "VEE_EXEC_ARGS"]
     for (var i = 0; i < envvars.length; i++) {
         if (env[envvars[i]] !== undefined) {
             new_env[envvars[i]] = env[envvars[i]];
@@ -87,7 +88,7 @@ var connectToNative = function() {
     })
     proc.stdout.on('data', handleInput)
     proc.stderr.on('data', function(data) {
-        console.error("stderr: " + data)
+        console.error("sgactions stderr: " + data)
     })
     proc.on('close', function(code) {
         console.error('child closed with code ' + code)
