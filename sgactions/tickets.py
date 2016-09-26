@@ -8,6 +8,8 @@ import textwrap
 import traceback
 import types
 
+import siteconfig
+
 from .utils import get_shotgun
 
 
@@ -54,43 +56,47 @@ def get_ticket_for_exception(exc_type=None, exc_value=None, exc_traceback=None, 
     else:
         mini_uuid = None
         
-    # Get the Shotgun and Project.
-    # TODO: Somehow pass this in later.
+    # Get the Shotgun.
     shotgun = get_shotgun()
-    project = dict(type='Project', id=74)
     
     # Look for an existing ticket, or create a new one.
     if mini_uuid:
         ticket = shotgun.find_one('Ticket', [('title', 'contains', '[%s]' % mini_uuid)])
-    else:
-        ticket = None
-    if ticket is None:
-        
-        if title is None:
-            if exc_type and exc_value:
-                title = '%s: %s' % (exc_type.__name__, exc_value)
-            else:
-                title = 'New Ticket'
+        if ticket:
+            return ticket['id']
 
-        uuid_tag = ' [%s]' % mini_uuid if mini_uuid else ''
+    if title is None:
+        if exc_type and exc_value:
+            title = '%s: %s' % (exc_type.__name__, exc_value)
+        else:
+            title = 'New Ticket'
 
-        # Automatically truncate to 255 escaped chars. Remember that the uuid
-        # tag will consume 11, and another 3 for ellipsis, and a guess as to
-        # how many due to the string escaping.
-        if len(title.encode('string-escape')) + len(uuid_tag) > 255:
-            title = title[:
-                255
-                - (len(title.encode('string-escape')) - len(title))
-                - len(uuid_tag)
-                - 3
-            ] + '...'
-        title = '%s%s' % (title, uuid_tag)
+    uuid_tag = ' [%s]' % mini_uuid if mini_uuid else ''
 
-        ticket = shotgun.create('Ticket', dict(
-            title=title,
-            sg_status_list='rev', # Pending Review.
-            project=project,
-        ))
+    # Automatically truncate to 255 escaped chars. Remember that the uuid
+    # tag will consume 11, and another 3 for ellipsis, and a guess as to
+    # how many due to the string escaping.
+    if len(title.encode('string-escape')) + len(uuid_tag) > 255:
+        title = title[:
+            255
+            - (len(title.encode('string-escape')) - len(title))
+            - len(uuid_tag)
+            - 3
+        ] + '...'
+    title = '%s%s' % (title, uuid_tag)
+
+    # Lookup where we are storing this ticket.
+    project_id = siteconfig.get('SGACTIONS_TICKET_PROJECT')
+    if not project_id:
+        raise ValueError('SGACTIONS_TICKET_PROJECT must be set via siteconfig')
+    tool_id = siteconfig.get('SGACTIONS_TICKET_TOOL')
+
+    ticket = shotgun.create('Ticket', dict(
+        title=title,
+        sg_status_list='rev', # Pending Review.
+        project={'type': 'Project', 'id': project_id},
+        sg_tool={'type': 'Tool', 'id': tool_id} if tool_id else None,
+    ))
     
     return ticket['id']
     
