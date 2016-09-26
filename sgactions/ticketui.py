@@ -16,7 +16,7 @@ class Dialog(QtGui.QDialog):
     def __init__(self, exceptions=None, allow_no_exception=True):
         super(Dialog, self).__init__()
         
-        self._exception_list = list(exceptions or [])
+        self._exc_infos = list(exceptions or [])
         self._allow_no_exception = allow_no_exception
         self._setup_ui()
     
@@ -30,15 +30,13 @@ class Dialog(QtGui.QDialog):
         if self._allow_no_exception:
             self._exception.addItem('None', None)
         
-        for exc_type, exc_value, exc_traceback in self._exception_list:
-            self._exception.addItem(
-                '%s: %s [%s]' % (exc_type.__name__, exc_value, tickets.exception_uuid(exc_type, exc_value, exc_traceback)),
-                (exc_type, exc_value, exc_traceback),
-            )
+        for exc_type, exc_value, exc_traceback in self._exc_infos:
+            uuid = tickets.exception_uuid(exc_type, exc_value, exc_traceback)
+            self._exception.addItem('%s: %s [%s]' % (exc_type.__name__, exc_value, uuid))
         self._exception.setCurrentIndex(self._exception.count() - 1)
         self._exception.currentIndexChanged.connect(self._on_exception)
         
-        if not self._allow_no_exception and len(self._exception_list) == 1:
+        if not self._allow_no_exception and len(self._exc_infos) == 1:
             self.layout().addRow("Exception", QtGui.QLabel(self._exception.currentText()))
         else:
             self.layout().addRow("Exception", self._exception)
@@ -76,7 +74,7 @@ class Dialog(QtGui.QDialog):
         self._on_exception(self._exception.currentIndex())
     
     def _on_exception(self, exc_index):
-        exc_info = self._exception.itemData(exc_index).toPyObject()
+        exc_info = self._exc_infos[exc_index]
         self._title_label.setVisible(not exc_info)
         self._title.setVisible(not exc_info)
     
@@ -107,9 +105,8 @@ class Dialog(QtGui.QDialog):
         return data
     
     def _on_submit(self, *args):
-        
         exc_index = self._exception.currentIndex()
-        exc_info = self._exception.itemData(exc_index).toPyObject()
+        exc_info = self._exc_infos[exc_index]
         data = self._get_reply_data(exc_info)
         if exc_info:
             title = None
