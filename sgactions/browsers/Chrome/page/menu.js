@@ -364,8 +364,8 @@ window.Ext.override(window.SG.Widget.Base, {
                 SG.Repo.request_news()
             }
 
-            SGActions.scheduleMessage({
-                html: 'Running ' + action_url.substr(9),
+            SGActionsUI.scheduleMessage({
+                html: 'Running ' + action_url.url.substr(9),
                 close_x: true,
                 type: 'dispatch'
             })
