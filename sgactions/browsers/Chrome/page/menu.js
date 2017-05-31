@@ -386,7 +386,7 @@ window.Ext.override(window.SG.Widget.EntityQuery.EntityQueryPage, {
         try {
 
             var base_url = action_url.url;
-            var poll_for_data_updates = this.custom_external_action.poll_for_data_updates;
+            var poll_for_data_updates = action_url.poll_for_data_updates;
 
             // Don't do anything if it isn't one of ours.
             if (!SGActions.nativeCapabilities.dispatch || base_url.indexOf("sgaction:") != 0) {
