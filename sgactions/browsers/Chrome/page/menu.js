@@ -328,7 +328,7 @@ window.Ext.override(window.SG.Widget.Base, {
     on_custom_external_action: function(selected_entity, action_url, action_poll_for_data_updates) {
 
         // Don't do anything if it isn't one of ours.
-        if (!SGActions.nativeCapabilities.dispatch || action_url.indexOf("sgaction:") != 0) {
+        if (!SGActions.nativeCapabilities.dispatch || action_url.url.indexOf("sgaction:") != 0) {
             return original_action.apply(this, arguments);
         }
 
@@ -353,7 +353,7 @@ window.Ext.override(window.SG.Widget.Base, {
             }
             
             // SGActions!
-            var url = action_url + "?" + Ext.urlEncode(req);
+            var url = action_url.url + "?" + Ext.urlEncode(req);
             SGActions.postNative({
                 type: 'dispatch',
                 url: url
@@ -381,11 +381,11 @@ window.Ext.override(window.SG.Widget.Base, {
 // monkey-patch context menu launcher
 var original_launch = window.SG.Widget.EntityQuery.EntityQueryPage.prototype.custom_external_action_launch;
 window.Ext.override(window.SG.Widget.EntityQuery.EntityQueryPage, {
-    custom_external_action_launch: function() {
+    custom_external_action_launch: function(action_url) {
 
         try {
 
-            var base_url = this.custom_external_action.base_url;
+            var base_url = action_url.url;
             var poll_for_data_updates = this.custom_external_action.poll_for_data_updates;
 
             // Don't do anything if it isn't one of ours.
