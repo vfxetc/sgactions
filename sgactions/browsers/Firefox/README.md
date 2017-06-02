@@ -36,5 +36,3 @@ We have a few options to deploy:
 1. List the addon publically. I'm not keen on dealing with the vetting process at this time.
 2. Host it somewhere ourselves. We need to host the updates via HTTPS (which we can't do internally at this time), or some other crypto nonsense.
 3. Install into the `Firefox.app` (and similar on Linux) and the user's profile(s) in their home. This presents them with the dialog the first time they open Firefox, and then updates are allowed afterwards.
-
-We are going with #3. Whenever a new version is to be released, it should be signed and placed into `/Volumes/CGroot/systems/packages/Firefox/sgactions`.
