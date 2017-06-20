@@ -20,13 +20,13 @@ setup(
         pyyaml
     ''',
 
-    entrypoints={
+    entry_points={
         'console_scripts': '''
             sgactions-deploy = sgactions.deploy:main
-            sgactions-install-addon = sgactions.browsers.install:main
-            sgactions-install-handler = sgactions.register:main
-        '''
-    }
+            sgactions-install = sgactions.install:main
+        ''',
+    },
+
     metatools_apps=[{
 
         'name': 'SGActions',

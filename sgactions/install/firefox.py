@@ -49,8 +49,9 @@ def setup_one_home(home, args):
 
 def _copy_extension(ext_dir, args):
     dst = os.path.join(ext_dir, '@sgactions.xpi')
-    print('    Copying extension to', dst)
+    exists = os.path.exists(dst)
+    print('    {} extension at {}'.format('Replacing' if exists else 'Copying',  dst))
     if not args.dry_run:
-        if os.path.exists(dst):
+        if exists:
             os.unlink(dst)
         shutil.copyfile(args.xpi, dst)

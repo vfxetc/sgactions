@@ -67,7 +67,7 @@ def _setup_kde(home, args, protocol=PROTOCOL):
         print("    NOTE: .kde does not exist; skipping.")
         return
 
-    proto_dir = os.path.join(kde_dir, '/share/services')
+    proto_dir = os.path.join(kde_dir, 'share/services')
     if not os.path.exists(proto_dir):
         os.makedirs(proto_dir)
 
