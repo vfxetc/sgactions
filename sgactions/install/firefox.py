@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import shutil
 import sys
+import stat
 
 
 def setup_parser(parser):
@@ -32,6 +33,8 @@ def setup_one_home(home, args):
 
     count = 0
 
+    home_stat = os.stat(home)
+
     for rel_profile in 'Library/Application Support/Firefox/Profiles', '.mozilla/firefox':
         profile_root = os.path.join(home, rel_profile)
         if not os.path.exists(profile_root):
@@ -40,14 +43,14 @@ def setup_one_home(home, args):
             ext_dir = os.path.join(profile_root, name, 'extensions')
             if not os.path.exists(ext_dir):
                 continue
-            _copy_extension(ext_dir, args)
+            _copy_extension(ext_dir, args, home_stat)
             count += 1
 
     if not count:
         print('    WARNING: No Firefox profiles found!')
 
 
-def _copy_extension(ext_dir, args):
+def _copy_extension(ext_dir, args, home_stat):
     dst = os.path.join(ext_dir, '@sgactions.xpi')
     exists = os.path.exists(dst)
     print('    {} extension at {}'.format('Replacing' if exists else 'Copying',  dst))
@@ -55,3 +58,7 @@ def _copy_extension(ext_dir, args):
         if exists:
             os.unlink(dst)
         shutil.copyfile(args.xpi, dst)
+        if not os.getuid():
+            print('        Setting ownership and permissions')
+            os.chown(dst, home_stat.st_uid, home_stat.st_gid)
+            os.chmod(dst, 0o755)
