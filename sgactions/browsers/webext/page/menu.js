@@ -185,11 +185,6 @@ var expand_icon_name = function(icon) {
     // FontAwesome looks like:
     //   fa fa-NAME
 
-    // Assume silk for simple ones.
-    if (/^\w+$/.test(icon)) {
-        return 'silk silk-' + icon
-    }
-
     m = /^(fa|silk|fatcow)(?:-icon)?-(\w+)$/.exec(icon)
     if (m) {
         return m[1] + ' ' + m[1] + '-' + m[2];
@@ -200,6 +195,10 @@ var expand_icon_name = function(icon) {
         }
     }
 
+    // Assume silk for simple ones.
+    if (/^[\w-]+$/.test(icon)) {
+        return 'silk silk-' + icon
+    }
     return icon
 
 }
