@@ -75,8 +75,10 @@ function injectJS(url) {
     document.head.appendChild(script);
 }
 
-injectCSS(getPageURL("css/silk/silk-icons.css"));
+injectCSS(getPageURL("css/icons/silk.css"));
+// injectCSS(getPageURL("css/icons/fatcow.css"));
 injectCSS(getPageURL("css/sgactions.css"));
+// injectCSS('https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
 injectJS(getPageURL("ui.js"));
 injectJS(getPageURL("core.js")); // Depends on UI.
 injectJS(getPageURL("menu.js")); // Depends on UI.

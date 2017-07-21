@@ -20,3 +20,33 @@
     - Brings up something Toolbox like which takes heirarchical settings for
       Maya version, etc..
     - Maya, Nuke, Mudbox, Zbrush, etc..
+
+- More icons:
+
+    window.SG.schema.entity_icon_for = function(obj, mode) {
+
+        // obj may be a string, in which case entity_icon_name is called.
+        // otherwise mode should be one of "entity_hash" or "record", in which case
+        // it looks up the entity in this.get_special_entity_icon_cfg(), and
+        // calls `icon_for_{mode}` in it (if set)
+        // defaults to entity_icon_name
+
+    }
+
+    // We can also do fun things with get_special_entity_icon_cfg:
+    /*
+
+    SG.schema.special_entity_icon_cfg.CustomNonProjectEntity13 = {
+        columns: ['sg_type'],
+        icon_for_record: function(record) {
+            console.log(record); return {
+                'workstation': 'fatcow fatcow-computer',
+                'printer': 'fatcow fatcow-printer'
+            }[record.get('sg_type')] || 'icon_Task'
+        }
+    }
+
+    // record.row.data appears to be all the data. So we could have icon_for_record
+    // be the same as (icon_for_entity_hash(record.row.data))
+
+    */

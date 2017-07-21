@@ -178,6 +178,58 @@ var evaluate_filter_for_many = function(filter, entities) {
 
 }
 
+var expand_icon_name = function(icon) {
+    
+    // Silk looks like:
+    //   silk-icon silk-icon-NAME
+    // FontAwesome looks like:
+    //   fa fa-NAME
+
+    // Assume silk for simple ones.
+    if (/^\w+$/.test(icon)) {
+        return 'silk silk-' + icon
+    }
+
+    m = /^(fa|silk|fatcow)(?:-icon)?-(\w+)$/.exec(icon)
+    if (m) {
+        return m[1] + ' ' + m[1] + '-' + m[2];
+        if (m[1] == 'silk') {
+            return 'silk silk-' + m[2]
+        } else {
+            return m[1] + ' ' + icon
+        }
+    }
+
+    return icon
+
+}
+
+
+// monkey-patch icons
+// For some reason doing it with Ext.override isn't playing nicely.
+var original_entity_icon_name = window.SG.schema.entity_icon_name;
+var iconLogged = {};
+window.SG.schema.entity_icon_name = function(name) {
+    // console.log('icon for', name)
+
+    try {
+        var icon = localStorage['sga_icon_' + name]
+        if (icon) {
+            icon = expand_icon_name(icon);
+            if (!iconLogged[name]) {
+                console.log('[SGActions] replacing', name, 'icon with:', icon)
+                iconLogged[name] = true
+            }
+            return icon;
+        }
+    } catch (e) {
+        console.log('[SGActions] error in entity_icon_name:', e);
+    }
+
+    // return 'silk-icon silk-icon-bell'
+    return original_entity_icon_name.call(this, name)
+}
+
 
 // monkey-patch menu render (for icons, filtering, etc.)
 var original_render = window.SG.Menu.prototype.render_menu_items;
@@ -218,7 +270,7 @@ window.Ext.override(window.SG.Menu, {
                         }
 
                         item.html = rich.t || item.html;
-                        item.icon_name = 'silk-icon silk-icon-' + (rich.i || 'brick');
+                        item.icon_name = expand_icon_name(rich.i || 'brick')
                         item.heading = rich.h;
 
                         filter = rich.f ? JSON.parse(rich.f) : null;
@@ -236,8 +288,8 @@ window.Ext.override(window.SG.Menu, {
                     // Icon in square-brackets at end: "Title [icon]"
                     m = /^(.+?)\s*\[(.+?)\]$/.exec(item.html || '');
                     if (m) {
-                        item.html = m[1];
-                        item.icon_name = 'silk-icon silk-icon-' + m[2];
+                        item.html = m[1]
+                        item.icon_name = expand_icon_name(m[2])
                     }
 
                     // Evalute the filters, and disable/style the results.
