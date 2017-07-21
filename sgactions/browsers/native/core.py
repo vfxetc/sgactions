@@ -90,9 +90,14 @@ def pong(**kw):
 
 
 @handler
-def dispatch(url, **kw):
-    log('dispatching:', url)
-    res = _dispatch(url, reload=None)
+def dispatch(entrypoint=None, kwargs=None, url=None, **kw):
+
+    # We must respect the old URL method until the legacy Chrome/Firefox addon is gone.
+
+    log('dispatching:', entrypoint or url)
+
+    res = _dispatch(entrypoint=entrypoint, kwargs=kwargs, url=url, reload=None)
+
     if isinstance(res, Exception):
         reply_exception(kw, res)
     else:

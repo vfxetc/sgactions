@@ -37,11 +37,18 @@ def parse_url(url):
     return m.group(1), query
 
 
-def dispatch(url, reload=False):
+def dispatch(entrypoint=None, kwargs=None, url=None, reload=False):
 
     try:
-        kwargs = {}
-        entrypoint, kwargs = parse_url(url)
+
+        if (entrypoint and url) or not (entrypoint or url):
+            raise ValueError("Need one of entrypoint or URL.")
+
+        if entrypoint and kwargs is None:
+            raise ValueError("Need kwargs with entrypoint.")
+        if url:
+            entrypoint, kwargs = parse_url(url)
+
         func = load_entrypoint(entrypoint, reload=reload)
         return func(**kwargs)
 
@@ -98,7 +105,7 @@ def main():
 
     sys.stdout = sys.stderr = open('/tmp/sgactions.native.log', 'a')
 
-    dispatch(url)
+    dispatch(url=url)
 
 
 

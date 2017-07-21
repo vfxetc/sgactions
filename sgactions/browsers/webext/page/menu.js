@@ -327,31 +327,35 @@ var original_action = window.SG.Widget.Base.prototype.custom_external_action_lau
 window.Ext.override(window.SG.Widget.Base, {
     custom_external_action_launcher: function(req, ami) {
 
-        //console.log('HERE', req, ami)
+        // console.log('HERE', req, ami)
         
-        // Don't do anything if it isn't one of ours.
-        if (!SGActions.nativeCapabilities.dispatch || ami.url.indexOf("sgaction:") != 0) {
-            return original_action.apply(this, arguments);
-        }
-
         try {
+            // Strip off the scheme, and any legacy rich data.
+            var m = /^sgactions?:([^\/]+)(\/|$)/.exec(ami.url)
+            if (m && SGActions.nativeCapabilities.dispatch) {
 
-            var url = ami.url + "?" + Ext.urlEncode(req);
-            SGActions.postNative({
-                type: 'dispatch',
-                url: url
-            })
+                var entrypoint = m[1]
+                
+                SGActions.postNative({
+                    type: 'dispatch',
+                    entrypoint: m[1],
+                    kwargs: req,
+                })
 
-            SGActionsUI.scheduleMessage({
-                html: 'Running ' + ami.url.substr(9),
-                close_x: true,
-                type: 'dispatch'
-            })
+                SGActionsUI.scheduleMessage({
+                    html: 'Running ' + entrypoint,
+                    close_x: true,
+                    type: 'dispatch'
+                })
+
+                return
+            }
 
         } catch (e) {
-            console.log('[SGActions] error in custom_external_action_launcher:', e);
-            return original_action.apply(this, arguments);
+            console.log('[SGActions] error in custom_external_action_launcher:', e)
         }
+
+        return original_action.apply(this, arguments)
 
     }
 })
