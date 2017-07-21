@@ -26,8 +26,6 @@ def setup_parser(parser):
     parser.what_group.add_argument('--chrome', action='store_true')
 
 
-
-
 def install_chrome_extension(profile_dir, ext_path, force=False):
 
     prefs_path = os.path.join(profile_dir, 'Default', 'Preferences')
@@ -105,45 +103,6 @@ def install_chrome_extension(profile_dir, ext_path, force=False):
         json.dump(prefs, open(prefs_path, 'w'), indent=4, sort_keys=True)
 
 
-def get_native_messenger_origins(native_dir):
-    native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
-    if os.path.exists(native_path):
-        print '\t' + native_path
-        try:
-            existing = json.load(open(native_path))
-            return existing['allowed_origins']
-        except ValueError:
-            pass
-    
-    return ()
-
-
-def install_native_messenger(native_dir, ext_path, native_origins):
-
-    native_path = os.path.join(native_dir, 'com.westernx.sgactions.json')
-    print '\t' + native_path
-
-    if not os.path.exists(native_dir):
-        try:
-            os.makedirs(native_dir)
-        except OSError as e:
-            print '\t\tCANNOT MKDIR:', e
-            return
-
-    try:
-        fh = open(native_path, 'wb')
-    except IOError as e:
-        print '\t\tCANNOT WRITE:', e
-        return
-
-    with fh:
-        fh.write(json.dumps({
-            "name": "com.westernx.sgactions",
-            "description": "SGActions",
-            "path": os.path.abspath(os.path.join(ext_path, '..', 'native', 'sgactions-native-messenger')),
-            "type": "stdio",
-            "allowed_origins": native_origins,
-        }))
 
 
 

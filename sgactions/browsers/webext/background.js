@@ -7,7 +7,74 @@ var logMessage = function(msg) {
     console.log("[SGActions]", src, 'to', dst, msg);
 }
 
+var connectDelay = 0;
+
+
+var pageConnections = {}
+
+var broadcast = function(msg) {
+    for (tab in pageConnections) {
+        var conn = pageConnections[tab]
+        if (conn != undefined) {
+            conn.postMessage(msg)
+        }
+    }
+}
+
+
+
+var onDisconnect = function(thisId, event) {
+
+    console.log("[SGActions] native", thisId, "disconnected");
+
+    // Let everyone know it is down.
+    broadcast({
+        src: 'background',
+        dst: 'page',
+        type: 'disconnect',
+    })
+
+    if (thisId == lastNativeId) {
+        // Attempt an immediate reconnect.
+        console.log("[SGActions] reconnecting...")
+        setTimeout(connect, connectDelay);
+        connectDelay = Math.min(5000, connectDelay * 2 || 100);
+    } else {
+        console.log("[SGActions] skipping automatic reconnect as", thisId, '!=', lastNativeId)
+    }
+
+}
+
+
+var nativePort = null;
+var lastNativeId = 0;
+
+var connect = function() {
+
+    var thisId = lastNativeId + 1
+    lastNativeId = thisId
+
+    console.log('[SGActions] starting native connection', thisId);
+
+    nativePort = chrome.runtime.connectNative('com.vfxetc.sgactions');
+    nativePort.onDisconnect.addListener(onDisconnect.bind(nativePort, thisId));
+    nativePort.onMessage.addListener(routeMessage);
+
+    // Let everyone know it is back up.
+    broadcast({
+        src: 'background',
+        dst: 'page',
+        type: 'connect',
+    })
+
+}
+
+
+
 var routeMessage = function(msg) {
+
+    // Our connection is good, so next time try immediately.
+    connectDelay = 0
 
     var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
     var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
@@ -58,70 +125,6 @@ var routeMessage = function(msg) {
 
 }
 
-var pageConnections = {}
-
-var broadcast = function(msg) {
-    for (tab in pageConnections) {
-        var conn = pageConnections[tab]
-        if (conn != undefined) {
-            conn.postMessage(msg)
-        }
-    }
-}
-
-
-var connectDelay = 0;
-
-var onDisconnect = function(thisId, event) {
-
-    console.log("[SGActions] native", thisId, "disconnected");
-
-    // Let everyone know it is down.
-    broadcast({
-        src: 'background',
-        dst: 'page',
-        type: 'disconnect',
-    })
-
-    if (thisId == lastNativeId) {
-        // Attempt an immediate reconnect.
-        console.log("[SGActions] reconnecting...")
-        setTimeout(connect, connectDelay);
-        connectDelay = Math.min(5000, connectDelay * 2 || 100);
-    } else {
-        console.log("[SGActions] skipping automatic reconnect as", thisId, '!=', lastNativeId)
-    }
-
-}
-
-
-var nativePort = null;
-var lastNativeId = 0;
-
-var connect = function() {
-
-    var thisId = lastNativeId + 1
-    lastNativeId = thisId
-
-    connectDelay = 0 // It was successful, so next time try immediately.
-
-    console.log('[SGActions] starting native connection', thisId);
-
-    nativePort = chrome.runtime.connectNative('com.westernx.sgactions');
-    nativePort.onDisconnect.addListener(onDisconnect.bind(nativePort, thisId));
-    nativePort.onMessage.addListener(routeMessage);
-
-    // Let everyone know it is back up.
-    broadcast({
-        src: 'background',
-        dst: 'page',
-        type: 'connect',
-    })
-
-}
-connect()
-
-
 
 
 
@@ -147,3 +150,9 @@ chrome.runtime.onConnect.addListener(function (conn) {
     })
 
 })
+
+
+
+// Kick it all off.
+connect()
+

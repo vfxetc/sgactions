@@ -5,11 +5,14 @@ import shutil
 import sys
 import stat
 
+from . import webext
+
 
 def setup_parser(parser):
     parser.what_group.add_argument('--firefox', action='store_true',
         help="Install Firefox addon.")
     firefox_group = parser.add_argument_group('Firefox options')
+    firefox_group.add_argument('--native-only', action='store_true')
     firefox_group.add_argument('--xpi', default='/Volumes/CGroot/systems/packages/Firefox/sgactions/latest.xpi')
 
 
@@ -18,7 +21,10 @@ def main(args):
     if not (args.all or args.firefox):
         return
 
-    if not os.path.exists(args.xpi):
+    if args.native_only or not os.path.exists(args.xpi):
+        args.xpi = None
+
+    if not (args.native_only or args.xpi):
         print("Firefox XPI does not exist.", file=sys.stderr)
         exit(1)
 
@@ -31,8 +37,21 @@ def main(args):
 
 def setup_one_home(home, args):
 
-    count = 0
+    if args.xpi:
+        _copy_extension_into_home(home, args)
 
+    if sys.platform == 'darwin':
+        native_dir = os.path.join(home, 'Library/Application Support/Mozilla/NativeMessagingHosts')
+    else:
+        native_dir = os.path.join(home, '.mozilla/native-messaging-hosts')
+    webext.install_native_messenger(native_dir, allowed_extensions=[
+        'sgactions@vfxetc.com',
+    ])
+
+
+def _copy_extension_into_home(home, args):
+
+    count = 0 
     home_stat = os.stat(home)
 
     for rel_profile in 'Library/Application Support/Firefox/Profiles', '.mozilla/firefox':
