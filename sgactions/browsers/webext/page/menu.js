@@ -323,119 +323,39 @@ window.Ext.override(window.SG.Menu, {
 
 
 // monkey-patch base action handler (for page-level actions, etc.)
-var original_action = window.SG.Widget.Base.prototype.on_custom_external_action;
+var original_action = window.SG.Widget.Base.prototype.custom_external_action_launcher;
 window.Ext.override(window.SG.Widget.Base, {
-    on_custom_external_action: function(selected_entity, action_url, action_poll_for_data_updates) {
+    custom_external_action_launcher: function(req, ami) {
 
+        //console.log('HERE', req, ami)
+        
         // Don't do anything if it isn't one of ours.
-        if (!SGActions.nativeCapabilities.dispatch || action_url.url.indexOf("sgaction:") != 0) {
+        if (!SGActions.nativeCapabilities.dispatch || ami.url.indexOf("sgaction:") != 0) {
             return original_action.apply(this, arguments);
         }
 
         try {
 
-            // Lifted from Shotgun's source.
-            var req = {
-                user_id: SG.globals.current_user.id,
-                user_login: SG.globals.current_user.login,
-                session_uuid: SG.globals.session_uuid,
-                entity_type: selected_entity.type,
-                selected_ids: selected_entity.id,
-                ids: selected_entity.id,
-                server_hostname: SG.globals.hostname,
-                title: SG.schema.entity_types[selected_entity.type].display_name + ' ' + selected_entity.id
-            };
-            var project = this.single_project_from_context();
-            if (project) {
-                req.project_name = project.name;
-                req.project_id = project.id;
-                req.title = req.project_name + ' - ' + req.title;
-            }
-            
-            // SGActions!
-            var url = action_url.url + "?" + Ext.urlEncode(req);
+            var url = ami.url + "?" + Ext.urlEncode(req);
             SGActions.postNative({
                 type: 'dispatch',
                 url: url
             })
 
-            // Lifted from Shotgun's source.
-            if (action_poll_for_data_updates) {
-                SG.Repo.request_news()
-            }
-
             SGActionsUI.scheduleMessage({
-                html: 'Running ' + action_url.url.substr(9),
+                html: 'Running ' + ami.url.substr(9),
                 close_x: true,
                 type: 'dispatch'
             })
 
         } catch (e) {
-            console.log('[SGActions] error in on_custom_external_action:', e);
+            console.log('[SGActions] error in custom_external_action_launcher:', e);
             return original_action.apply(this, arguments);
         }
 
     }
 })
 
-// monkey-patch context menu launcher
-var original_launch = window.SG.Widget.EntityQuery.EntityQueryPage.prototype.custom_external_action_launch;
-window.Ext.override(window.SG.Widget.EntityQuery.EntityQueryPage, {
-    custom_external_action_launch: function(action_url) {
-
-        try {
-
-            var base_url = action_url.url;
-            var poll_for_data_updates = action_url.poll_for_data_updates;
-
-            // Don't do anything if it isn't one of ours.
-            if (!SGActions.nativeCapabilities.dispatch || base_url.indexOf("sgaction:") != 0) {
-                return original_launch.apply(this, arguments);
-            }
-
-            // Lifted from Shotgun's source.
-            var url = base_url + "?" + Ext.urlEncode(this.custom_external_action);
-
-            // SGActions!
-            console.log('[SGActions] native dispatch:', base_url);
-            SGActions.postNative({
-                type: 'dispatch',
-                url: url
-            })
-
-            // Lifted from Shotgun's source.
-            delete this.custom_external_action.base_url;
-            delete this.custom_external_action.poll_for_data_updates;
-            var content_widget = this.get_content_widget();
-            content_widget.hide_loading_overlay();
-            if (poll_for_data_updates) {
-                SG.Repo.request_news()
-            }
-
-            SGActionsUI.scheduleMessage({
-                html: 'Running ' + base_url.substr(9),
-                close_x: true,
-                type: 'dispatch'
-            })
-
-        } catch(err) {
-
-            console.log('[SGActions] error in custom_external_action_launch:', err);
-
-            // Restore state, and fall back onto the original.
-            if (base_url != undefined) {
-                this.custom_external_action.base_url = base_url;
-            }
-            if (poll_for_data_updates != undefined) {
-                this.custom_external_action.poll_for_data_updates = poll_for_data_updates;
-            }
-            return original_launch.apply(this, arguments);
-
-        }
-
-
-    }
-})
 
 
 
