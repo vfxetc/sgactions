@@ -45,7 +45,7 @@ def setup_one_home(home, args):
     else:
         native_dir = os.path.join(home, '.mozilla/native-messaging-hosts')
     webext.install_native_messenger(native_dir, allowed_extensions=[
-        'sgactions@vfxetc.com',
+        '@sgactions',
     ])
 
 

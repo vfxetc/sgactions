@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sgactions',
-    version='1.1.0',
+    version='1.2.0',
     description='Shotgun ActionMenuItem enrichment.',
     url='http://github.com/westernx/sgactions',
     

@@ -3,11 +3,11 @@
     
     "name": "SGActions",
     "description": "Enhanced action menu items.",
-    "version": "0.2",
+    "version": "1.2.0",
     
     "applications": {
       "gecko": {
-        "id": "sgactions@vfxetc.com",
+        "id": "@sgactions",
         "strict_min_version": "42.0"
       }
     },
