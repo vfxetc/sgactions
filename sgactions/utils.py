@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def get_runtime():
-    from .browsers.chrome_native import runtime
+    from .browsers.native import runtime
     return runtime
 
 
