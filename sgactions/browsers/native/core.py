@@ -14,10 +14,15 @@ import traceback
 import weakref
 
 
+from sgactions.dispatch import dispatch as _dispatch
+
+
 def log(*args):
     sys.stderr.write('[SGActions] %s\n' % ' '.join(str(x) for x in args))
     sys.stderr.flush()
 
+# We need to keep checking for this as long as the old Firefox plugin is
+# in the wild.
 _line_based = os.environ.get('SGACTIONS_HOST') == 'Firefox'
 
 _capabilities = {}
@@ -28,7 +33,6 @@ _local = threading.local()
 
 def reply(orig, **msg):
     msg['dst'] = orig.get('src') or orig
-    msg['src'] = 'native'
     send(**msg)
 
 def send(**msg):
@@ -49,13 +53,11 @@ def reply_exception(orig, e):
     reply(orig, **format_exception(e))
 
 
-
 def handler(func, name=None):
     if isinstance(func, basestring):
         return functools.partial(handler, name=func)
     _handlers[name or func.__name__] = func
     return func
-
 
 
 @handler
@@ -66,11 +68,25 @@ def hello(capabilities=None, **kw):
         capabilities={'dispatch': True},
         executable=sys.executable,
         script=__file__,
-        bootstrapper=os.environ.get('SGACTIONS_NATIVE_SH'),
-        extension=os.environ.get('SGACTIONS_EXT_ID'),
+        native=os.environ.get('SGACTIONS_NATIVE'),
+        origin=os.environ.get('SGACTIONS_ORIGIN'),
+        host=os.environ.get('SGACTIONS_HOST'),
     )
 
+@handler
+def elloh(**kw):
+    pass
 
+
+@handler
+def ping(**req):
+    res = req.copy()
+    res['type'] = 'pong'
+    reply(req, res)
+
+@handler
+def pong(**kw):
+    pass
 
 
 @handler
@@ -83,7 +99,6 @@ def dispatch(url, **kw):
         reply(kw, type='result', result=res)
 
 
-
 def send_and_recv(**kwargs):
     session = current_session()
     queue = session.get('result_queue')
@@ -94,6 +109,7 @@ def send_and_recv(**kwargs):
     reply = queue.get(timeout=timeout)
     log('async response:', repr(reply))
     return reply
+
 
 @handler
 def user_response(session_token, **kw):
@@ -109,39 +125,42 @@ def user_response(session_token, **kw):
 
 def main():
 
-    # We need to take over both stdout and stderr so that print statements
-    # don't result in chrome thinking it is getting a message back.
+    # We need to take over stdout so that print statements don't result in the
+    # browser thinking it is getting a message back.
     sys.stdout = open('/tmp/sgactions.native.log', 'a')
-    # sys.stderr = sys.stdout
 
     dispatch_counter = 0
 
-    print >> sys.stderr, '[SGActions] entering main loop'
+    log('entering main loop')
 
     while True:
 
         try:
+
             if _line_based:
                 raw_msg = sys.stdin.readline()
                 if not raw_msg:
-                    print >> sys.stderr, '[SGActions] native port closed'
+                    log('native port closed')
                     break
+
             else:
                 raw_size = sys.stdin.read(4)
                 if not raw_size:
-                    print >> sys.stderr, '[SGActions] native port closed'
+                    log('native port closed')
                     break
                 size, = struct.unpack('I', raw_size)
-                print >> sys.stderr, '[SGActions] reading message of size', raw_size
+                log('reading message of size', raw_size)
                 raw_msg = sys.stdin.read(size)
+
             msg = json.loads(raw_msg)
+
         except Exception as e:
             traceback.print_exc()
             send(**format_exception(e))
             continue
 
         if len(_threads):
-            log('%d sessions open' % len(_threads))
+            log('%d sessions already open' % len(_threads))
 
         if msg.get('type') not in _handlers:
             reply(msg, type='error', error='unknown message type %r' % msg.get('type'))
@@ -149,7 +168,7 @@ def main():
 
         dispatch_counter += 1
 
-        thread = _threads[dispatch_counter] = threading.Thread(target=_main_thread, args=[msg])
+        thread = _threads[dispatch_counter] = threading.Thread(target=_dispatch_target, args=[msg])
         thread.daemon = True
         thread.session = {
             'type': msg['type'],
@@ -160,10 +179,6 @@ def main():
         del thread # Kill this reference immediately.
 
 
-
-    _running = False
-
-
 def current_session(strict=True):
     try:
         return threading.current_thread().session
@@ -171,7 +186,8 @@ def current_session(strict=True):
         if strict:
             raise RuntimeError('no current native handler')
 
-def _main_thread(msg):
+
+def _dispatch_target(msg):
     try:
         _handlers[msg['type']](**msg)
     except Exception as e:
@@ -180,10 +196,6 @@ def _main_thread(msg):
             reply_exception(msg, e)
         except Exception as e:
             # Just in case it is the exception reporting mechanism...
-            print >> sys.stderr, 'EXCEPTION DURING reply_exception'
+            log('exception during reply_exception')
             traceback.print_exc()
 
-
-
-# Circular imports!
-from sgactions.dispatch import dispatch as _dispatch
