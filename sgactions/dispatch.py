@@ -16,17 +16,13 @@ def parse_url(url):
     # Parse the URL into scheme, path, and query.
     m = re.match(r'^(?:(\w+):)?(.*?)(?:/(.*?))?(?:\?(.*))?$', url)
     scheme, netloc, path, query = m.groups()
-    query = urlparse.parse_qs(query, keep_blank_values=True) if query else {}
-
-    # Parse the values.
-    for k, v in query.items():
-        if k == 'ids' or k.endswith('_ids'):
-            v[:] = [int(x) for x in v[0].split(',')] if v[0] else []
-            continue
-        if k.endswith('_id'):
-            v[:] = [int(x) for x in v]
+    
+    kwargs = urlparse.parse_qs(query, keep_blank_values=True) if query else {}
+    for k, v in kwargs.iteritems():
         if len(v) == 1 and k not in ('cols', 'column_display_names'):
-            query[k] = v[0]
+            kwargs[k] = v = v[0]
+        if k.endswith('_id') and v.isdigit():
+            kwargs[k] = int(v)
 
     # Parse the path into an entrypoint.
     m = re.match(r'^([\w.]+:\w+)$', netloc)
@@ -34,7 +30,15 @@ def parse_url(url):
         raise ValueError('entrypoint must be like "package.module:function"; got "%s"' % netloc)
         return 1
 
-    return m.group(1), query
+    return m.group(1), kwargs
+
+
+def parse_raw_kwargs(kwargs):
+    for k, v in kwargs.items():
+        if isinstance(k, basestring) and isinstance(v, basestring):
+            if k == 'ids' or k.endswith('_ids'):
+                kwargs[k] = [int(x) for x in v.split(',')] if v else []
+                continue
 
 
 def dispatch(entrypoint=None, kwargs=None, url=None, reload=False):
@@ -48,6 +52,8 @@ def dispatch(entrypoint=None, kwargs=None, url=None, reload=False):
             raise ValueError("Need kwargs with entrypoint.")
         if url:
             entrypoint, kwargs = parse_url(url)
+
+        parse_raw_kwargs(kwargs)
 
         func = load_entrypoint(entrypoint, reload=reload)
         return func(**kwargs)
