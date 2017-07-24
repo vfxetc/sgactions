@@ -3,7 +3,7 @@
     
     "name": "SGActions",
     "description": "Enhanced action menu items.",
-    "version": "1.2.0",
+    "version": "1.2.1",
     
     "applications": {
       "gecko": {
