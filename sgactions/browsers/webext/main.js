@@ -1,8 +1,5 @@
 
 
-// The abstract object for connecting to the "background".
-var port;
-var isChrome = window.chrome != undefined
 
 var routeMessage = function(msg) {
     if (msg.dst == 'page') {
@@ -12,9 +9,14 @@ var routeMessage = function(msg) {
     }
 }
 
+
+// The abstract object for connecting to the "background".
+var port;
+
 var onDisconnect = function() {
     console.log('[SGActions] background disconnected')
     port = null
+    // Let the page know.
     routeMessage({
         src: 'main',
         dst: 'page',
@@ -24,46 +26,38 @@ var onDisconnect = function() {
 
 var connectToBackground = function() {
     console.log('[SGActions] connecting to background')
-    if (isChrome) {
-        port = chrome.runtime.connect();
-        port.onMessage.addListener(routeMessage);
-        port.onDisconnect.addListener(onDisconnect);
-    } else { // Firefox
-        port = self.port;
-        port.on('message', routeMessage);
-        // There is no disconnect?!
-    }
+    port = chrome.runtime.connect();
+    port.onMessage.addListener(routeMessage);
+    port.onDisconnect.addListener(onDisconnect);
+    port.postMessage({sgactions: {
+        dst: 'background',
+        src: 'main',
+        type: 'hello',
+    }})
 }
+
+// Go!
 connectToBackground();
 
-var sendToBackground = function(msg) {
-    if (isChrome) {
-        port.postMessage(msg)
-    } else {
-        port.emit('message', msg)
-    }
-}
+
+
 
 window.addEventListener("message", function(e) {
 
-    // TODO: Figure out why Firefox does not like looking at e.source
-    // if (e.source != window) return; // Must be from this page.
-    if (!e.data.sgactions) return;  // Must be sgactions.
+    if (e.source != window) return; // Must be from this page.
+    if (!e.data.sgactions) return; // Must be sgactions.
 
     var msg = e.data.sgactions;
+
     // Redirect messages to the background to it.
     if (msg.dst == 'background' || msg.dst == 'native') {
-        sendToBackground(msg);
+        port.postMessage(msg);
     }
 
 })
 
 function getPageURL(url) {
-    if (isChrome) { // Chrome
-        return chrome.extension.getURL('page/' + url)
-    } else { // Firefox
-        return self.options.pageURL + '/' + url
-    }
+    return chrome.extension.getURL('page/' + url)
 }
 
 function injectCSS(url) {
@@ -81,8 +75,12 @@ function injectJS(url) {
     document.head.appendChild(script);
 }
 
-injectCSS(getPageURL("css/silk/silk-icons.css"));
+injectCSS(getPageURL("css/icons/silk.css"));
+// injectCSS(getPageURL("css/icons/fatcow.css"));
 injectCSS(getPageURL("css/sgactions.css"));
+// injectCSS('https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
 injectJS(getPageURL("ui.js"));
 injectJS(getPageURL("core.js")); // Depends on UI.
 injectJS(getPageURL("menu.js")); // Depends on UI.
+
+

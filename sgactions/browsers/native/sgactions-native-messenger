@@ -1,23 +1,32 @@
 #!/bin/bash
 
+# For a .bashrc to detect that it may need to source an environment.
+# This is the abspath of this script.
+export SGACTIONS_NATIVE="$0"
+
+# Chrome: extension ID
+# Firefox: path to native JSON
+# Firefox (legacy): extension ID
+export SGACTIONS_ORIGIN="$1"
+
+# This is only here for the legacy Firefox plugin because it has a different
+# line-based protocol and it must be detected.
+# Chrome: nothing
+# Firefox (55+): extension ID ("application" in the manifest)
+# Firefox (legacy): extension ID (via `self.id`)
+export SGACTIONS_HOST="${2-WebExt}"
+
 # Source the environment, but leave it as is if there is already something
 # there so that dev-mode works.
-if [[ "$VEE" == "" && "$KS_TOOLS" == "" ]]; then
+# TODO: Do something less specific (both $VEE and ~/.bashrc).
+if [[ "$VEE" == "" ]]; then
 	echo "[SGActions] sourcing environment" >&2
 	source ~/.bashrc
 fi
 
-# Debugging info; gets sent to the console.
-export SGACTIONS_NATIVE_SH="$0"
-export SGACTIONS_EXT_ID="$1"
-export SGACTIONS_HOST="${2-Chrome}"
-
 # Always load the Python that is associated with this version of sgactions.
 # If sgactions was registered in dev mode, that will result in the dev
 # code being called.
-export PYTHONPATH="$(dirname $0)/../../..:$PYTHONPATH"
+export PYTHONPATH="$(dirname $0)/../../../..:$PYTHONPATH"
 
-# We could use the app at /usr/local/vee/Applications/SGActions.app, but
-# then it would always be the in dock. Instead, notifications may get a
-# little messier.
 exec python -m sgactions.browsers.native

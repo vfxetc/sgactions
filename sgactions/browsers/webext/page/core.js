@@ -9,7 +9,6 @@ if (window.SGActions !== undefined) {
 }
 
 
-
 console.log('[SGActions] loaded core')
 
 
@@ -74,7 +73,7 @@ SGActions.nativeHandlers.elloh = function(msg) {
     // Notify them if this is a reconnect.
     if (SGActions._didDisconnect) {
         SGActionsUI.showMessage({
-            html: 'Western Post plugin reconnected.',
+            html: 'SGActions reconnected.',
             type: 'connected',
         })
         // Hide it in 2s.
@@ -107,13 +106,13 @@ SGActions.nativeHandlers.disconnect = function(msg) {
 
     if (msg.src == 'main') {
         SGActionsUI.showMessage({
-            html: 'Western Post plugin crashed; please refresh Shotgun.',
+            html: 'SGActions crashed; please refresh Shotgun.',
             type: 'crashed',
             close_x: false
         })
     } else if (msg.src == 'native') {
         SGActionsUI.showMessage({
-            html: 'Western Post plugin disconnected; reconnecting...',
+            html: 'SGActions disconnected; reconnecting...',
             type: 'disconnect',
             close_x: false
         })

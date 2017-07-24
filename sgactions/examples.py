@@ -2,7 +2,7 @@ import json
 import os
 
 from . import utils
-from .browsers.chrome_native import is_native
+from .browsers.native import is_native
 
 
 def dump_kwargs(**kwargs):
