@@ -40,9 +40,9 @@
         columns: ['sg_type'],
         icon_for_record: function(record) {
             console.log(record); return {
-                'workstation': 'fatcow fatcow-computer',
-                'printer': 'fatcow fatcow-printer'
-            }[record.get('sg_type')] || 'icon_Task'
+                'workstation': 'silk silk-computer',
+                'printer': 'silk silk-brick'
+            }[record.get('sg_type')] || 'silk silk-computer'
         }
     }
 

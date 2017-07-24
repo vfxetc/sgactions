@@ -185,7 +185,7 @@ var expand_icon_name = function(icon) {
     // FontAwesome looks like:
     //   fa fa-NAME
 
-    m = /^(fa|silk|fatcow)(?:-icon)?-(\w+)$/.exec(icon)
+    m = /^(fa|silk|fatcow)(?:-icon)?-([\w-]+)$/.exec(icon)
     if (m) {
         return m[1] + ' ' + m[1] + '-' + m[2];
         if (m[1] == 'silk') {
