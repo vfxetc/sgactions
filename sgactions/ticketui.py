@@ -6,13 +6,16 @@ import subprocess
 import sys
 import tempfile
 
-from uitools.qt import Qt, QtCore, QtGui
+from uitools.qt import Q
 
 from . import tickets
 
 
-class Dialog(QtGui.QDialog):
+class Dialog(Q.Widgets.Dialog):
     
+    def __new__(cls, *args, **kwargs):
+        return super(Dialog, cls).__new__(cls)
+
     def __init__(self, exceptions=None, allow_no_exception=True):
         super(Dialog, self).__init__()
         
@@ -23,9 +26,9 @@ class Dialog(QtGui.QDialog):
     def _setup_ui(self):
         self.setWindowTitle('Open A Ticket')
         self.setMinimumSize(400, 300)
-        self.setLayout(QtGui.QFormLayout())
+        self.setLayout(Q.FormLayout())
         
-        self._exception = QtGui.QComboBox()
+        self._exception = Q.ComboBox()
         
         if self._allow_no_exception:
             self._exception.addItem('None', None)
@@ -37,35 +40,35 @@ class Dialog(QtGui.QDialog):
         self._exception.currentIndexChanged.connect(self._on_exception)
         
         if not self._allow_no_exception and len(self._exc_infos) == 1:
-            self.layout().addRow("Exception", QtGui.QLabel(self._exception.currentText()))
+            self.layout().addRow("Exception", Q.Label(self._exception.currentText()))
         else:
             self.layout().addRow("Exception", self._exception)
         
-        self._title_label = QtGui.QLabel("Title")
-        self._title = QtGui.QLineEdit('Bug Report')
+        self._title_label = Q.Label("Title")
+        self._title = Q.LineEdit('Bug Report')
         self.layout().addRow(self._title_label, self._title)
         
-        self._description = QtGui.QTextEdit('Please describe the problem, and any steps to reproduce it and/or fix it.')
+        self._description = Q.TextEdit('Please describe the problem, and any steps to reproduce it and/or fix it.')
         self._description.focusInEvent = lambda *args: self._description.selectAll()
         self.layout().addRow("Description", self._description)
         
         self._screenshot_path = None
-        self._screenshot = QtGui.QLabel()
+        self._screenshot = Q.Label()
         self._screenshot.setFixedSize(133, 100)
-        self._screenshot.setPixmap(QtGui.QPixmap(os.path.abspath(os.path.join(
+        self._screenshot.setPixmap(Q.Pixmap(os.path.abspath(os.path.join(
             __file__, '..', 'art', 'no_screenshot.png'
         ))).scaledToHeight(100, Qt.SmoothTransformation))
-        self._screenshot.setFrameShadow(QtGui.QFrame.Sunken)
-        self._screenshot.setFrameShape(QtGui.QFrame.Panel)
+        self._screenshot.setFrameShadow(Q.Frame.Sunken)
+        self._screenshot.setFrameShape(Q.Frame.Panel)
         self._screenshot.mouseReleaseEvent = self._on_screenshot
         self.layout().addRow("Screenshot", self._screenshot)
         
-        buttons = QtGui.QHBoxLayout()
+        buttons = Q.HBoxLayout()
         self.layout().addRow("", buttons)
         
         buttons.addStretch()
         
-        button = QtGui.QPushButton('Submit')
+        button = Q.PushButton('Submit')
         button.clicked.connect(self._on_submit)
         buttons.addWidget(button)
         
@@ -90,7 +93,7 @@ class Dialog(QtGui.QDialog):
         self.show()
         
         self._screenshot_path = path
-        pixmap = QtGui.QPixmap(path).scaledToHeight(100, Qt.SmoothTransformation)
+        pixmap = Q.Pixmap(path).scaledToHeight(100, Qt.SmoothTransformation)
         self._screenshot.setPixmap(pixmap)
         self._screenshot.setFixedSize(pixmap.size())
     
@@ -118,7 +121,7 @@ class Dialog(QtGui.QDialog):
         if self._screenshot_path:
             tickets.attach_to_ticket(ticket_id, self._screenshot_path)
         self.close()
-        QtGui.QMessageBox.information(None,
+        Q.MessageBox.information(None,
             'Ticket Created',
             'Ticket #%d has been created on Shotgun' % ticket_id,
         )
@@ -126,7 +129,7 @@ class Dialog(QtGui.QDialog):
 
 def ticket_current_exception(dialog_class=None):
 
-    msgbox = QtGui.QMessageBox()
+    msgbox = Q.MessageBox()
     
     type_, value, traceback = sys.exc_info()
     
