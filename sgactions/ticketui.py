@@ -57,7 +57,7 @@ class Dialog(Q.Widgets.Dialog):
         self._screenshot.setFixedSize(133, 100)
         self._screenshot.setPixmap(Q.Pixmap(os.path.abspath(os.path.join(
             __file__, '..', 'art', 'no_screenshot.png'
-        ))).scaledToHeight(100, Qt.SmoothTransformation))
+        ))).scaledToHeight(100, Q.SmoothTransformation))
         self._screenshot.setFrameShadow(Q.Frame.Sunken)
         self._screenshot.setFrameShape(Q.Frame.Panel)
         self._screenshot.mouseReleaseEvent = self._on_screenshot
@@ -93,7 +93,7 @@ class Dialog(Q.Widgets.Dialog):
         self.show()
         
         self._screenshot_path = path
-        pixmap = Q.Pixmap(path).scaledToHeight(100, Qt.SmoothTransformation)
+        pixmap = Q.Pixmap(path).scaledToHeight(100, Q.SmoothTransformation)
         self._screenshot.setPixmap(pixmap)
         self._screenshot.setFixedSize(pixmap.size())
     
