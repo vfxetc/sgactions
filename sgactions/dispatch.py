@@ -35,10 +35,23 @@ def parse_url(url):
 
 def parse_raw_kwargs(kwargs):
     for k, v in kwargs.items():
-        if isinstance(k, basestring) and isinstance(v, basestring):
-            if k == 'ids' or k.endswith('_ids'):
+        if not isinstance(k, basestring):
+            continue
+
+        # From a URL, these are always strings.
+        # Via the web-ext, they are sometimes strings. It depends on the
+        # internal javascript, which makes the assumption that it will all
+        # get turned into strings to make it to the backend.
+
+        if k == 'ids' or k.endswith('_ids'):
+            if isinstance(v, basestring):
                 kwargs[k] = [int(x) for x in v.split(',')] if v else []
-                continue
+            elif isinstance(v, int):
+                kwargs[k] = [v]
+
+        if k == 'id' or k.endswith('id'):
+            if isinstance(v, basestring) and v.isdigit():
+                kwargs[k] = int(v)
 
 
 def dispatch(entrypoint=None, kwargs=None, url=None, reload=False):
