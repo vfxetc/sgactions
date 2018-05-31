@@ -276,7 +276,7 @@ window.Ext.override(window.SG.Menu, {
             
                     }
 
-                    // New method: Rich data in the title itself, e.g.:
+                    // Method 2: Rich data in the title itself, e.g.:
                     // "Heading / Title"
                     var m = /^\s*(.+?)\s+\/\s+(.+?)\s*$/.exec(item.html || '');
                     if (m) {

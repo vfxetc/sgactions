@@ -36,7 +36,7 @@ var onDisconnect = function(thisId, event) {
 
     if (thisId == lastNativeId) {
         // Attempt an immediate reconnect.
-        console.log("[SGActions] reconnecting...")
+        console.log("[SGActions] reconnecting in " + connectDelay + "ms...")
         setTimeout(connect, connectDelay);
         connectDelay = Math.min(5000, connectDelay * 2 || 100);
     } else {
@@ -73,8 +73,10 @@ var connect = function() {
 
 var routeMessage = function(msg) {
 
+    // TODO: Fix this logic. It should perhaps look for a message coming from
+    // the native messenger.
     // Our connection is good, so next time try immediately.
-    connectDelay = 0
+    // connectDelay = 0
 
     var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
     var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
