@@ -9,6 +9,8 @@ import re
 import sys
 
 
+from . import webext
+
 sgactions_root = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
 
 
@@ -111,11 +113,7 @@ def main(args):
     if not (args.all or args.chrome):
         return
     
-    if not args.experimental:
-        print("Chrome is experimental.")
-        return
-    
-    ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browsers', 'Chrome'))
+    ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browsers', 'webext'))
 
     # Normalize so the same path on OS X and Linux; at WesternX lib and
     # lib64 are symlinked together.
@@ -126,33 +124,40 @@ def main(args):
 
     ext_paths = set((ext_path, os.path.realpath(ext_path)))
 
-    print 'installing Chrome extension:', ext_path
-    profile_dirs = [os.path.expanduser(x) for x in (
-        '~/Library/Application Support/Google/Chrome',
-        '~/Library/Application Support/Google/Chrome Canary',
-        '~/.config/google-chrome'
+    for home in args.home:
+        print('Setting up Chrome in', home)
+        setup_one_home(home, args, ext_paths)
+
+def setup_one_home(home, args, ext_paths):
+
+    profile_dirs = [os.path.join(home, x) for x in (
+        'Library/Application Support/Google/Chrome',
+        'Library/Application Support/Chromium',
+        '.config/google-chrome',
+        '.config/chromium',
     )]
     for profile_dir in profile_dirs:
-        install_chrome_extension(profile_dir, ext_path, force=args.force)
+        # We don't know how to do this anymore.
+        pass #install_chrome_extension(profile_dir, ext_path, force=args.force)
 
     native_dirs = [os.path.join(profile_dir, 'NativeMessagingHosts') for profile_dir in profile_dirs]
-    native_dirs.extend((
-        '/Library/Google/Chrome/NativeMessagingHosts',
-        '/Library/Application Support/Chromium/NativeMessagingHosts',
-    ) if sys.platform == 'darwin' else (
-        '/etc/opt/chrome/native-messaging-hosts',
-        '/etc/chromium/native-messaging-hosts',
-    ))
+    # native_dirs.extend((
+    #     '/Library/Google/Chrome/NativeMessagingHosts',
+    #     '/Library/Application Support/Chromium/NativeMessagingHosts',
+    # ) if sys.platform == 'darwin' else (
+    #     '/etc/opt/chrome/native-messaging-hosts',
+    #     '/etc/chromium/native-messaging-hosts',
+    # ))
 
-    print 'finding existing native messengers'
+    print 'Finding existing native messengers...'
     native_origins = set("chrome-extension://%s/" % google_hash(ext_path) for ext_path in ext_paths)
     for native_dir in native_dirs:
-        native_origins.update(get_native_messenger_origins(native_dir))
+        native_origins.update(webext.get_native_messenger_origins(native_dir))
     native_origins = list(sorted(native_origins))
 
-    print 'installing native messenger'
+    print 'Installing native messengers...'
     for native_dir in native_dirs:
-        install_native_messenger(native_dir, ext_path, native_origins)
+        webext.install_native_messenger(native_dir, ext_path, native_origins)
 
     return True
 

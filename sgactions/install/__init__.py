@@ -37,8 +37,6 @@ def main():
     how_args.add_argument('-n', '--dry-run', action='store_true',
         help="Don't actually do anything.")
     how_args.add_argument('-f', '--force', action='store_true')
-    how_args.add_argument('-x', '--experimental', action='store_true',
-    	help="Include experimental features (e.g. Chrome install).")
 
     args = parser.parse_args()
 
