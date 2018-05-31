@@ -25,6 +25,8 @@ def main():
         help="Install into all homes in the given directory.")
 
     what_group = parser.what_group = parser.add_argument_group('Components to install')
+    what_group.add_argument('--dev', help='Dev mode?')
+    what_group.add_argument('--ext-path', help='Which extension')
     what_group.add_argument('-a', '--all', action='store_true',
         help="Install everything.")
 
@@ -39,6 +41,11 @@ def main():
     how_args.add_argument('-f', '--force', action='store_true')
 
     args = parser.parse_args()
+
+    if args.dev:
+        args.ext_path = os.path.expaduser('~/dev/sgactions/sgactions/browsers/webext')
+    if not args.ext_path:
+        args.ext_path = os.path.abspath(os.path.join(__file__, '..', '..', 'browsers', 'webext'))
 
     if args.self:
         args.home.append(os.path.expanduser('~'))
