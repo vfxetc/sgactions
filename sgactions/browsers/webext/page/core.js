@@ -9,7 +9,7 @@ if (window.SGActions !== undefined) {
 }
 
 
-console.log('[SGActions] loaded core')
+console.log('[SGActions/page] Loaded core.')
 
 
 SGActions = {
@@ -32,6 +32,7 @@ SGActions = {
         if (e.data.sgactions.dst != 'page') return; // Must be addressed to us.
 
         var msg = e.data.sgactions;
+
         var func = SGActions.nativeHandlers[msg.type];
         if (func) {
             func(msg)
@@ -67,7 +68,7 @@ SGActions.nativeHandlers.elloh = function(msg) {
 
     // This is the reply to our original "hello".
 
-    console.log('[SGActions] native connected with capabilities:', msg.capabilities);
+    console.log('[SGActions] Native connected with capabilities:', msg.capabilities);
     SGActions.nativeCapabilities = msg.capabilities;
 
     // Notify them if this is a reconnect.
@@ -110,6 +111,7 @@ SGActions.nativeHandlers.disconnect = function(msg) {
             type: 'crashed',
             close_x: false
         })
+
     } else if (msg.src == 'native') {
         SGActionsUI.showMessage({
             html: 'SGActions disconnected; reconnecting...',

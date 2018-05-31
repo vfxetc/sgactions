@@ -1,14 +1,7 @@
-console.log('[SGActions] background started; runtime ID:', chrome.runtime.id);
+console.log('[SGActions] Background started; runtime ID:', chrome.runtime.id);
 
-
-var logMessage = function(msg) {
-    var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
-    var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
-    console.log("[SGActions]", src, 'to', dst, msg);
-}
 
 var connectDelay = 0;
-
 
 var pageConnections = {}
 
@@ -23,9 +16,9 @@ var broadcast = function(msg) {
 
 
 
-var onDisconnect = function(thisId, event) {
+var onDisconnect = function(thisId) {
 
-    console.log("[SGActions] native", thisId, "disconnected");
+    console.log("[SGActions] Native #" + thisId + " disconnected.");
 
     // Let everyone know it is down.
     broadcast({
@@ -36,7 +29,7 @@ var onDisconnect = function(thisId, event) {
 
     if (thisId == lastNativeId) {
         // Attempt an immediate reconnect.
-        console.log("[SGActions] reconnecting in " + connectDelay + "ms...")
+        console.log("[SGActions] Reconnecting in " + connectDelay + "ms...")
         setTimeout(connect, connectDelay);
         connectDelay = Math.min(5000, connectDelay * 2 || 100);
     } else {
@@ -73,21 +66,23 @@ var connect = function() {
 
 var routeMessage = function(msg) {
 
-    // TODO: Fix this logic. It should perhaps look for a message coming from
-    // the native messenger.
-    // Our connection is good, so next time try immediately.
-    // connectDelay = 0
+    if (!msg.dst || !msg.src || !msg.type) {
+        console.log("[SGActions/background] Message is malformed:", msg);
+        return;
+    }
 
-    var dst = msg.dst && msg.dst.tab_id ? msg.dst.tab_id : msg.dst;
-    var src = msg.src && msg.src.tab_id ? msg.src.tab_id : msg.src;
-    console.log("[SGActions] routing", msg.type, "from", src, "to", dst, msg);
+    if (msg.src == 'native') {
+        // Our connection is good, so next time try immediately.
+        connectDelay = 0;
+    }
 
-    // Forward the reconnection "hello" response to all open pages so they
-    // know the connection is back up.
-    if (msg.dst == 'background' && msg.src == 'native' && msg.type == 'elloh') {
-        msg.src = 'background'
-        msg.dst = 'page'
-        broadcast(msg);
+    if (msg.dst == 'background') {
+        var func = messageHandlers[msg.type];
+        if (func) {
+            func(msg);
+        } else {
+            console.log("[SGActions/background] Unknown message type:", msg);
+        }
 
     } else if (msg.dst == 'native') {
         try {
@@ -98,20 +93,21 @@ var routeMessage = function(msg) {
             // already sent us a message (potentially a dispatch), and we
             // were unable to send it. We could try to connect and try again,
             // or bounce it back to them.
-
-            console.log("[SGActions] native errored:", e);
-
+            console.log("[SGActions] Native errored:", e);
             broadcast({
                 src: 'background',
                 dst: 'page',
                 type: 'disconnect',
                 error: e.toString()
             })
+
         }
 
-    } else if (msg.dst && msg.dst.tab_id) {
+    } else if (msg.dst.tab_id) {
+
         var tab_id = msg.dst.tab_id;
         msg.dst = msg.dst.next;
+
         var conn = pageConnections[tab_id];
         if (conn != undefined) {
             conn.postMessage(msg);
@@ -128,7 +124,25 @@ var routeMessage = function(msg) {
 }
 
 
+var messageHandlers = {};
 
+messageHandlers.hello = function(msg) {
+    routeMessage({
+        src: 'background',
+        dst: msg.src,
+        type: 'elloh',
+    });
+};
+
+messageHandlers.elloh = function(msg) {
+    // Forward the reconnection "hello" response to all open pages so they
+    // know the connection is back up.
+    if (msg.src == 'native') {
+        msg.src = 'background';
+        msg.dst = 'page';
+        broadcast(msg);
+    }
+}
 
 
 

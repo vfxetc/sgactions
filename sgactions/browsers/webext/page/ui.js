@@ -10,7 +10,7 @@ if (window.SGActionsUI !== undefined) {
 
 
 
-console.log('[SGActions] loaded UI')
+console.log('[SGActions/page] Loaded UI.')
 
 
 SGActionsUI = {}

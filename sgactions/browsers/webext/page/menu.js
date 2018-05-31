@@ -1,6 +1,8 @@
 (function() {
 
 
+console.log('[SGActions/page] Loaded menu.')
+
 
 var create_deep_links = function(entity, _seen) {
     // Mimicks the appearance of deep-links in the Shotgun API.
