@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import traceback
 
 from uitools.qt import Q
 
@@ -131,19 +132,21 @@ def ticket_current_exception(dialog_class=None):
 
     msgbox = Q.MessageBox()
     
-    type_, value, traceback = sys.exc_info()
+    exc_type, exc_value, exc_traceback = sys.exc_info()
     
     msgbox.setIcon(msgbox.Critical)
     msgbox.setWindowTitle('Python Exception')
-    msgbox.setText("Uncaught Python Exception: %s" % type_.__name__)
+    msgbox.setText("Uncaught Python Exception: %s" % exc_type.__name__)
     
-    if str(value) == 'super(type, obj): obj must be an instance or subtype of type':
+    if str(exc_value) == 'super(type, obj): obj must be an instance or subtype of type':
         msgbox.setInformativeText(
             '%s<br/><br/>'
             '<b><i>This appears to be a code reloading issue. '
-            'Restarting this program should fix it.</i></b>' % value)
+            'Restarting this program should fix it.</i></b>' % exc_value)
     else:
-        msgbox.setInformativeText(str(value))
+        msgbox.setInformativeText(str(exc_value))
+        msgbox.setDetailedText(traceback.format_exc())
+        msgbox.setStyleSheet("* { font-family: monospace; }")
 
     msgbox.addButton("Submit Ticket", msgbox.AcceptRole)
     
@@ -157,7 +160,7 @@ def ticket_current_exception(dialog_class=None):
         return False
     
     dialog_class = dialog_class or Dialog
-    dialog = dialog_class([(type_, value, traceback)], allow_no_exception=False)
+    dialog = dialog_class([(exc_type, exc_value, exc_traceback)], allow_no_exception=False)
     dialog.show()
     
     return True
@@ -171,6 +174,9 @@ def ticket_ui_context(reraise=True, pass_through=None, dialog_class=None):
 
         if pass_through and isinstance(e, pass_through):
             raise
+
+        # Dump it out to stdout (or wherever) regardless.
+        traceback.print_exc()
 
         not_ignored = ticket_current_exception(dialog_class=dialog_class)
         if reraise or (reraise is None and not not_ignored):
